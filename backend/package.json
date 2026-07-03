@@ -28,10 +28,7 @@
     "node-cron": "^3.0.2",
     "resend": "^0.17.0",
     "axios": "^1.6.0",
-    "tweetsearch": "^2.2.0",
-    "reddit": "^0.2.4",
-    "feed-parser": "^0.0.7",
-    "node-fetch": "^2.7.0",
+    "xml2js": "^0.6.2",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

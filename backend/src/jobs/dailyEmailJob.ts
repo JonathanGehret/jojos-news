@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import newsAggregator from '../services/NewsAggregator';
 import ollamaClient from '../services/OllamaClient';
 import emailSender from '../services/EmailSender';
+import summarizationService from '../services/SummarizationService';
 import db from '../database/connection';
 import topicsConfig from '../config/topics.json';
 import { v4 as uuidv4 } from 'uuid';
@@ -36,76 +37,52 @@ export class DailyEmailJob {
 
   async execute(): Promise<void> {
     try {
-      console.log('Starting daily news aggregation and email send...');
+      console.log('Starting daily email generation and sending...');
 
       // Get today's day of week
       const today = new Date();
-      const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'lowercase' });
-      const dayOfWeekCapitalized =
-        today.toLocaleDateString('en-US', { weekday: 'long' });
+      const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
+      const dayOfWeekLower = dayOfWeek.toLowerCase();
 
       // Get topic config for today
-      const dayConfig = (topicsConfig as any)[dayOfWeek];
+      const dayConfig = (topicsConfig as any)[dayOfWeekLower];
       if (!dayConfig) {
         throw new Error(`No topic configuration found for day: ${dayOfWeek}`);
       }
 
-      console.log(
-        `Today (${dayOfWeekCapitalized}): ${dayConfig.name} - Keywords: ${dayConfig.keywords.join(', ')}`
-      );
+      console.log(`Today (${dayOfWeek}): ${dayConfig.name}`);
 
-      // Aggregate news for today's topics
-      const newsItems = await newsAggregator.aggregate({
-        sources: ['twitter', 'rss', 'reddit'],
-        keywords: dayConfig.keywords,
-      });
+      // Fetch pre-generated summaries from database
+      const summaries = await summarizationService.getSummaryForDate(today);
 
-      console.log(`Aggregated ${newsItems.length} news items`);
+      if (summaries.length === 0) {
+        console.warn(
+          `⚠️  No summaries found for ${dayOfWeek}. Running ad-hoc summarization...`
+        );
 
-      if (newsItems.length === 0) {
-        console.warn('No news items found for today. Sending empty summary email.');
+        // Fallback: generate summaries on-the-fly if they weren't pre-generated
+        const generatedSummaries = await summarizationService.generateDailySummaries(
+          dayOfWeek,
+          dayConfig.keywords
+        );
+
+        if (generatedSummaries.length === 0) {
+          console.error(
+            '✗ No summaries generated. Sending empty/placeholder email.'
+          );
+        }
       }
 
-      // Generate summary using Ollama
-      const newsContent = newsItems
-        .slice(0, 20) // Limit to 20 items for token limits
-        .map((item) => `- ${item.title}\n  Source: ${item.source}\n  URL: ${item.url}`)
-        .join('\n\n');
+      // Prepare email content
+      const emailSummaries = summaries.map((s) => ({
+        topicName: s.topicName,
+        content: s.content,
+      }));
 
-      const summary = await ollamaClient.generateSummary(
-        newsContent || 'No news items available for today.',
-        dayOfWeekCapitalized,
-        dayConfig.name
-      );
-
-      console.log('Generated summary from Ollama');
-
-      // Store summary in database
-      const summaryId = uuidv4();
-      const summaryQuery = `
-        INSERT INTO summaries (id, date, day_of_week, topic_name, content, model)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT (date, topic_name) DO UPDATE SET
-          content = EXCLUDED.content,
-          updated_at = CURRENT_TIMESTAMP
-      `;
-
-      await db.execute(summaryQuery, [
-        summaryId,
-        today,
-        dayOfWeekCapitalized,
-        dayConfig.name,
-        summary,
-        process.env.OLLAMA_MODEL || 'mistral',
-      ]);
-
-      console.log('Stored summary in database');
+      console.log(`Sending email with ${emailSummaries.length} summary(ies)...`);
 
       // Send email
-      const emailSent = await emailSender.sendDailySummary(
-        [{ topicName: dayConfig.name, content: summary }],
-        today
-      );
+      const emailSent = await emailSender.sendDailySummary(emailSummaries, today);
 
       if (emailSent) {
         console.log('✓ Daily email sent successfully');

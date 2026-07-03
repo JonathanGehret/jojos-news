@@ -42,7 +42,22 @@ tasks:
       - curl -X POST http://localhost:3001/api/test/send-email
     desc: Manually trigger email sending
 
+  test:aggregate:
+    cmds:
+      - curl -X POST http://localhost:3001/api/test/aggregate-news
+    desc: Manually trigger news aggregation
+
+  test:summarize:
+    cmds:
+      - curl -X POST http://localhost:3001/api/test/generate-summaries
+    desc: Manually trigger summarization
+
   health:
     cmds:
       - curl http://localhost:3001/health
     desc: Check service health
+
+  get:news:
+    cmds:
+      - curl "http://localhost:3001/api/news-items?limit=10"
+    desc: Get recent news items from database

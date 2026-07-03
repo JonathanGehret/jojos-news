@@ -1,27 +1,42 @@
 import { NewsItem, NewsAggregatorOptions } from '../types';
 import db from '../database/connection';
+import twitterClient from './TwitterClient';
+import rssParser from './RSSParser';
+import redditClient from './RedditClient';
 import { v4 as uuidv4 } from 'uuid';
 
 export class NewsAggregator {
-  // Placeholder for Twitter/X API integration
+  // Fetch from Twitter/X API
   private async fetchTwitterNews(keywords: string[]): Promise<NewsItem[]> {
-    console.log(`Fetching Twitter news for keywords: ${keywords.join(', ')}`);
-    // TODO: Implement Twitter API integration
-    return [];
+    try {
+      const tweets = await twitterClient.fetchNewsByKeywords(keywords, 50);
+      return tweets;
+    } catch (error) {
+      console.error('Error fetching Twitter news:', error);
+      return [];
+    }
   }
 
-  // Placeholder for RSS feed integration
+  // Fetch from RSS feeds
   private async fetchRSSNews(keywords: string[]): Promise<NewsItem[]> {
-    console.log(`Fetching RSS news for keywords: ${keywords.join(', ')}`);
-    // TODO: Implement RSS feed parsing
-    return [];
+    try {
+      const articles = await rssParser.fetchAllFeeds(keywords);
+      return articles;
+    } catch (error) {
+      console.error('Error fetching RSS news:', error);
+      return [];
+    }
   }
 
-  // Placeholder for Reddit integration
+  // Fetch from Reddit
   private async fetchRedditNews(keywords: string[]): Promise<NewsItem[]> {
-    console.log(`Fetching Reddit news for keywords: ${keywords.join(', ')}`);
-    // TODO: Implement Reddit API integration
-    return [];
+    try {
+      const posts = await redditClient.fetchNewsBySubreddits(keywords, 100);
+      return posts;
+    } catch (error) {
+      console.error('Error fetching Reddit news:', error);
+      return [];
+    }
   }
 
   async aggregate(options: NewsAggregatorOptions): Promise<NewsItem[]> {

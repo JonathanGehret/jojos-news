@@ -215,6 +215,10 @@ DRY_RUN_EMAIL=false                 # Set to true to preview emails without send
 ### Dashboard
 - `GET /api/summaries?date=2024-01-15` - Get summaries for a date
 
+### News & Aggregation
+- `GET /api/news-items?limit=50&offset=0&source=rss` - Get recent news items (RSS/Twitter/Reddit)
+- `POST /api/test/aggregate-news` - Manually trigger news aggregation (testing)
+
 ### Admin
 - `GET /api/preferences` - Get current preferences
 - `PATCH /api/preferences` - Update preferences
@@ -222,13 +226,89 @@ DRY_RUN_EMAIL=false                 # Set to true to preview emails without send
 ### Logs
 - `GET /api/logs?limit=20&offset=0` - Get email delivery logs
 
+### Summarization
+- `POST /api/test/generate-summaries` - Manually trigger summarization (testing)
+
 ### Testing
 - `POST /api/test/send-email` - Manually trigger email job
+- `POST /api/test/aggregate-news` - Manually trigger aggregation
+- `POST /api/test/generate-summaries` - Manually trigger summarization
 
 ### Health
 - `GET /health` - Check service health (database, Ollama)
 
-## Daily Topic Configuration
+## News Sources & APIs
+
+### Aggregation Pipeline
+
+The system uses a three-tier architecture for reliable news delivery:
+
+**1. Aggregation (Every 6 Hours)**
+- Fetches from RSS, Twitter, and Reddit in parallel
+- Stores raw news items to `news_items` table
+- Deduplicates by URL to avoid duplicates
+- Keyword-based tagging
+
+**2. Summarization (5 AM Daily)**
+- Fetches last 24 hours of news for today's topic keywords
+- Batches items to stay within Ollama's token limits (~50 items per batch)
+- Generates neutral, unbiased summaries using Ollama
+- Stores summaries to `summaries` table
+
+**3. Email Delivery (6 AM Daily)**
+- Fetches pre-generated summaries from `summaries` table
+- Formats into HTML email with branding
+- Sends via Resend email service
+- Logs delivery status to `email_logs` table
+
+### Twitter/X (API)
+- Requires elevated access Twitter API v2 account
+- Credentials: X_BEARER_TOKEN in .env
+- Fetches recent tweets by keywords (excludes retweets, English only)
+
+### RSS Feeds
+- 8+ pre-configured feeds (TechCrunch, Reuters, BBC, DW, Science Daily, MarketWatch, etc.)
+- No authentication required
+- Parses both RSS 2.0 and Atom formats
+
+### Reddit
+- Requires Reddit API app credentials
+- Credentials: REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD
+- Fetches hot posts from 11 subreddits (r/technology, r/worldnews, r/germany, etc.)
+
+### How Aggregation Works
+1. **Scheduler**: Runs every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+2. **Fetching**: Fetches from RSS (first), Twitter, and Reddit in parallel
+3. **Filtering**: Matches keywords from daily topic configuration
+4. **Deduplication**: Removes duplicates by URL
+5. **Storage**: Saves to `news_items` table with source metadata
+6. **Tagged**: Each item tagged with matched keywords and source
+
+### Services & Classes
+
+**TwitterClient** (`src/services/TwitterClient.ts`)
+- Calls Twitter API v2 `/tweets/search/recent`
+- Returns 50 tweets per keyword
+- Graceful fallback if API not configured
+
+**RSSParser** (`src/services/RSSParser.ts`)
+- Fetches all configured feeds concurrently
+- Parses RSS 2.0 and Atom formats with xml2js
+- Extracts title, description, URL, author, publication date
+
+**RedditClient** (`src/services/RedditClient.ts`)
+- OAuth2 authentication with Reddit API
+- Fetches hot posts from 11 subreddits
+- Returns title, content, score, comments count
+
+**NewsAggregator** (`src/services/NewsAggregator.ts`)
+- Orchestrates all three clients
+- Deduplicates by URL + source
+- Stores to PostgreSQL database
+
+**AggregationScheduler** (`src/jobs/aggregationScheduler.ts`)
+- Cron job (every 6 hours, configurable)
+- Tracks aggregation status in logs
 
 Edit [backend/src/config/topics.json](backend/src/config/topics.json) to customize daily topics:
 
@@ -302,11 +382,8 @@ Create a multi-stage Dockerfile for production deployment.
 
 ## Next Steps (Future Enhancements)
 
-- [ ] Implement Twitter/X API news fetching
-- [ ] Implement RSS feed parser
-- [ ] Implement Reddit API client
-- [ ] Add per-user account system with authentication
-- [ ] Per-user topic customization
+- [ ] Implement per-user account system with authentication
+- [ ] Per-user topic customization and preferences
 - [ ] SMS delivery option
 - [ ] Slack integration
 - [ ] Real-time news updates (WebSocket)
@@ -314,6 +391,10 @@ Create a multi-stage Dockerfile for production deployment.
 - [ ] Sentiment analysis
 - [ ] Multi-language support
 - [ ] Mobile app (React Native)
+- [ ] Caching layer for faster queries
+- [ ] Search functionality across news items
+
+## Daily Topic Configuration
 
 ## Contributing
 

@@ -3,7 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import db from './database/connection';
 import DailyEmailJob from './jobs/dailyEmailJob';
+import AggregationScheduler from './jobs/aggregationScheduler';
+import SummarizationScheduler from './jobs/summarizationScheduler';
 import ollamaClient from './services/OllamaClient';
+import newsAggregator from './services/NewsAggregator';
+import summarizationService from './services/SummarizationService';
 
 dotenv.config();
 
@@ -55,6 +59,45 @@ app.get('/api/summaries', async (req: Request, res: Response) => {
     res.json({
       date: date.toISOString().split('T')[0],
       summaries: summaries,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// Get recent news items (for debugging/monitoring)
+app.get('/api/news-items', async (req: Request, res: Response) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
+    const offset = parseInt(req.query.offset as string) || 0;
+    const source = req.query.source as string;
+
+    let query = `
+      SELECT id, title, url, source, author, published_at, topic_tags, fetched_at
+      FROM news_items 
+    `;
+
+    const params: any[] = [];
+
+    if (source) {
+      query += `WHERE source = $1 `;
+      params.push(source);
+    } else {
+      query += `WHERE fetched_at >= NOW() - INTERVAL '12 hours' `;
+    }
+
+    query += `ORDER BY fetched_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    const news = await db.query(query, params);
+
+    res.json({
+      news: news,
+      limit: limit,
+      offset: offset,
+      total: news.length,
     });
   } catch (error) {
     res.status(500).json({
@@ -152,14 +195,81 @@ app.post('/api/test/send-email', async (req: Request, res: Response) => {
   }
 });
 
+// Test endpoint to manually trigger news aggregation
+app.post('/api/test/aggregate-news', async (req: Request, res: Response) => {
+  try {
+    console.log('Manual aggregation triggered via API');
+
+    const newsItems = await newsAggregator.aggregate({
+      sources: ['rss', 'twitter', 'reddit'],
+      keywords: ['Musk', 'Trump', 'AI', 'Germany', 'Politics', 'Science'],
+    });
+
+    res.json({
+      message: 'News aggregation executed successfully',
+      itemsCollected: newsItems.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// Test endpoint to manually trigger summarization
+app.post('/api/test/generate-summaries', async (req: Request, res: Response) => {
+  try {
+    console.log('Manual summarization triggered via API');
+
+    const today = new Date();
+    const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
+    const topicsConfig = require('./config/topics.json');
+    const dayConfig = (topicsConfig as any)[dayOfWeek.toLowerCase()];
+
+    if (!dayConfig) {
+      return res.status(400).json({
+        error: `No topic configuration found for day: ${dayOfWeek}`,
+      });
+    }
+
+    const summaries = await summarizationService.generateDailySummaries(
+      dayOfWeek,
+      dayConfig.keywords
+    );
+
+    res.json({
+      message: 'Summarization executed successfully',
+      summariesGenerated: summaries.length,
+      dayOfWeek: dayOfWeek,
+      topicName: dayConfig.name,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`✓ Server running on port ${port}`);
 
-  // Initialize and start the daily email job
+  // Initialize and start the news aggregation scheduler (every 6 hours)
+  const aggregationScheduler = new AggregationScheduler();
+  aggregationScheduler.start();
+
+  // Initialize and start the summarization scheduler (5 AM daily, before email send)
+  const summarizationScheduler = new SummarizationScheduler();
+  summarizationScheduler.start();
+
+  // Initialize and start the daily email job (6 AM Berlin time)
   const emailJob = new DailyEmailJob();
   emailJob.start();
 
+  console.log('✓ News aggregation scheduler started');
+  console.log('✓ Summarization scheduler started');
   console.log('✓ Daily email job scheduler started');
 });
 
