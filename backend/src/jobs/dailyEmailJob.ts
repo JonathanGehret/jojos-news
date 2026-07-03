@@ -6,6 +6,7 @@ import emailSender from '../services/EmailSender';
 import summarizationService from '../services/SummarizationService';
 import db from '../database/connection';
 import topicsConfig from '../config/topics.json';
+// @ts-ignore - uuid v9 type issue
 import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();

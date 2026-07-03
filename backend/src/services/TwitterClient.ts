@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { NewsItem } from '../types';
 import dotenv from 'dotenv';
+// @ts-ignore - uuid v9 type issue
 import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();

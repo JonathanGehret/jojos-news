@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import db from '../database/connection';
+// @ts-ignore - uuid v9 type issue
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 
@@ -45,7 +46,9 @@ export class EmailSender {
         html: html,
       });
 
-      if (!response.data?.id) {
+      // Handle Resend response (v3+ returns data directly, older versions nested)
+      const emailId = (response as any).id || (response as any).data?.id;
+      if (!emailId) {
         throw new Error('Failed to send email: No message ID returned');
       }
 
@@ -53,7 +56,7 @@ export class EmailSender {
       const logId = uuidv4();
       await this.logEmailAttempt(logId, this.emailTo, subject, 'sent', null, []);
 
-      console.log(`Email sent successfully: ${response.data.id}`);
+      console.log(`Email sent successfully: ${emailId}`);
       return true;
     } catch (error) {
       console.error('Error sending email:', error);

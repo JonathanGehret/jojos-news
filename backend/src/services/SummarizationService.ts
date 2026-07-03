@@ -1,6 +1,7 @@
 import ollamaClient from './OllamaClient';
 import db from '../database/connection';
 import { NewsItem, Summary } from '../types';
+// @ts-ignore - uuid v9 type issue
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 

@@ -3,6 +3,7 @@ import db from '../database/connection';
 import twitterClient from './TwitterClient';
 import rssParser from './RSSParser';
 import redditClient from './RedditClient';
+// @ts-ignore - uuid v9 type issue
 import { v4 as uuidv4 } from 'uuid';
 
 export class NewsAggregator {

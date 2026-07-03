@@ -1,4 +1,4 @@
-import db from './database/connection';
+import db from './connection';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';

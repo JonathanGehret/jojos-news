@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { NewsItem } from '../types';
+// @ts-ignore - uuid v9 type issue
 import { v4 as uuidv4 } from 'uuid';
+// @ts-ignore - xml2js type issue
 import xml2js from 'xml2js';
 
 interface RSSItem {
@@ -140,10 +142,8 @@ export class RSSParser {
 
           if (title.length > 200) continue;
 
-          const link =
-            item.link?.[0]?.href ||
-            item.link?.[0] ||
-            '';
+          const link: string =
+            (typeof item.link === 'string' ? item.link : (item.link?.[0] as any)?.href || (item.link?.[0] as any) || '').toString();
           const summary =
             (typeof item.summary?.[0] === 'string'
               ? item.summary[0]
