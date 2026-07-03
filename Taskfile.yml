@@ -1,0 +1,48 @@
+version: '3'
+
+tasks:
+  dev:backend:
+    cmds:
+      - cd backend && npm run dev
+    desc: Start backend development server
+
+  dev:frontend:
+    cmds:
+      - cd frontend && npm run dev
+    desc: Start frontend development server
+
+  db:migrate:
+    cmds:
+      - cd backend && npm run db:migrate
+    desc: Run database migrations
+
+  docker:up:
+    cmds:
+      - docker-compose up -d
+    desc: Start PostgreSQL and Ollama containers
+
+  docker:down:
+    cmds:
+      - docker-compose down
+    desc: Stop all containers
+
+  docker:logs:
+    cmds:
+      - docker-compose logs -f
+    desc: View container logs
+
+  install:
+    cmds:
+      - cd backend && npm install
+      - cd frontend && npm install
+    desc: Install all dependencies
+
+  test:email:
+    cmds:
+      - curl -X POST http://localhost:3001/api/test/send-email
+    desc: Manually trigger email sending
+
+  health:
+    cmds:
+      - curl http://localhost:3001/health
+    desc: Check service health

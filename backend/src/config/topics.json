@@ -1,0 +1,37 @@
+{
+  "monday": {
+    "name": "Musk, Trump & AI Tech",
+    "keywords": ["Musk", "Elon", "Trump", "AI", "artificial intelligence", "machine learning"],
+    "focus": "Focus on Elon Musk's ventures, Trump developments, and AI/Tech breakthroughs"
+  },
+  "tuesday": {
+    "name": "Nature & Physics",
+    "keywords": ["nature", "physics", "science", "climate", "environment", "discovery"],
+    "focus": "Focus on natural sciences, physics research, climate, and environmental news"
+  },
+  "wednesday": {
+    "name": "Musk, Trump & AI Tech",
+    "keywords": ["Musk", "Elon", "Trump", "AI", "artificial intelligence", "tech"],
+    "focus": "Focus on Elon Musk's ventures, Trump developments, and AI/Tech breakthroughs"
+  },
+  "thursday": {
+    "name": "German & EU Politics",
+    "keywords": ["Germany", "Berlin", "EU", "Europe", "German politics", "Sonneborn", "AfD"],
+    "focus": "Focus on German politics, EU developments, and Sonneborn statements"
+  },
+  "friday": {
+    "name": "Musk, Trump & AI Tech",
+    "keywords": ["Musk", "Elon", "Trump", "AI", "artificial intelligence", "tech"],
+    "focus": "Focus on Elon Musk's ventures, Trump developments, and AI/Tech breakthroughs"
+  },
+  "saturday": {
+    "name": "German & EU Politics",
+    "keywords": ["Germany", "Berlin", "EU", "Europe", "German politics", "Sonneborn", "AfD"],
+    "focus": "Focus on German politics, EU developments, and Sonneborn statements"
+  },
+  "sunday": {
+    "name": "General News & Investing",
+    "keywords": ["news", "world", "market", "investing", "stocks", "economy", "finance"],
+    "focus": "Focus on general world news, investing trends, stock market updates"
+  }
+}

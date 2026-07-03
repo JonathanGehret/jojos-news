@@ -1,0 +1,72 @@
+{
+  "techFeeds": [
+    {
+      "name": "TechCrunch",
+      "url": "https://techcrunch.com/feed/",
+      "category": "tech"
+    },
+    {
+      "name": "Hacker News",
+      "url": "https://news.ycombinator.com/rss",
+      "category": "tech"
+    },
+    {
+      "name": "The Verge",
+      "url": "https://www.theverge.com/rss/index.xml",
+      "category": "tech"
+    }
+  ],
+  "newsFeeds": [
+    {
+      "name": "Reuters",
+      "url": "https://feeds.reuters.com/reuters/businessNews",
+      "category": "business"
+    },
+    {
+      "name": "BBC News",
+      "url": "http://feeds.bbc.co.uk/news/rss.xml",
+      "category": "world"
+    },
+    {
+      "name": "Reuters World",
+      "url": "https://feeds.reuters.com/reuters/worldNews",
+      "category": "world"
+    }
+  ],
+  "germanyFeeds": [
+    {
+      "name": "DW News",
+      "url": "https://www.dw.com/en/rss",
+      "category": "germany"
+    },
+    {
+      "name": "Deutsche Welle",
+      "url": "https://www.dw.com/en/top-stories/s-9097",
+      "category": "germany"
+    }
+  ],
+  "scienceFeeds": [
+    {
+      "name": "Science Daily",
+      "url": "https://www.sciencedaily.com/rss/all.xml",
+      "category": "science"
+    },
+    {
+      "name": "Physics Today",
+      "url": "https://physicstoday.scitation.org/rss/latest",
+      "category": "science"
+    }
+  ],
+  "businessFeeds": [
+    {
+      "name": "Investing.com",
+      "url": "https://feeds.investing.com/rss/news.rss",
+      "category": "investing"
+    },
+    {
+      "name": "MarketWatch",
+      "url": "https://feeds.marketwatch.com/marketwatch/topstories/",
+      "category": "investing"
+    }
+  ]
+}

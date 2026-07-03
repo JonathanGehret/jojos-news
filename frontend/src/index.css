@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 font-sans;
+}
+
+.container {
+  @apply max-w-6xl mx-auto px-4 py-8;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200;
+}
+
+.button {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.button-primary {
+  @apply button bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.button-secondary {
+  @apply button bg-gray-200 text-gray-800 hover:bg-gray-300;
+}
