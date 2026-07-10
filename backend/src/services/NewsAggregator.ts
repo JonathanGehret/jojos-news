@@ -89,7 +89,9 @@ export class NewsAggregator {
       (id, title, description, url, source, source_url, author, published_at, fetched_at, topic_tags, content, image_url)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       ON CONFLICT (url, source) DO UPDATE SET
-        topic_tags = array_unique(array_cat(news_items.topic_tags, EXCLUDED.topic_tags)),
+        topic_tags = ARRAY(
+          SELECT DISTINCT unnest(array_cat(news_items.topic_tags, EXCLUDED.topic_tags))
+        ),
         updated_at = CURRENT_TIMESTAMP
     `;
 

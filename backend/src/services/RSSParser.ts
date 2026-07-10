@@ -39,18 +39,21 @@ export class RSSParser {
 
   constructor() {
     this.parser = new xml2js.Parser({ explicitArray: true, mergeAttrs: true });
+    // NOTE: feed URLs verified reachable (HTTP 200) 2026-07. Reuters killed its
+    // public RSS; BBC and DW moved domains — hence the corrected hosts below.
     this.feeds = [
       // Tech feeds
       { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', category: 'tech' },
       { name: 'Hacker News', url: 'https://news.ycombinator.com/rss', category: 'tech' },
       { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', category: 'tech' },
+      { name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index', category: 'tech' },
 
       // News feeds
-      { name: 'Reuters', url: 'https://feeds.reuters.com/reuters/businessNews', category: 'news' },
-      { name: 'BBC News', url: 'http://feeds.bbc.co.uk/news/rss.xml', category: 'news' },
+      { name: 'BBC News', url: 'https://feeds.bbci.co.uk/news/rss.xml', category: 'news' },
+      { name: 'The Guardian', url: 'https://www.theguardian.com/world/rss', category: 'news' },
 
       // Germany feeds
-      { name: 'DW News', url: 'https://www.dw.com/en/rss', category: 'germany' },
+      { name: 'DW News', url: 'https://rss.dw.com/rdf/rss-en-all', category: 'germany' },
 
       // Science feeds
       { name: 'Science Daily', url: 'https://www.sciencedaily.com/rss/all.xml', category: 'science' },
