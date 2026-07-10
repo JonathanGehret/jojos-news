@@ -10,10 +10,10 @@
 
 **Core Function**:
 1. Aggregate news from RSS, Twitter/X, and Reddit (every 6 hours)
-2. Summarize using local Ollama/Mistral LLM (5 AM Berlin time)
+2. Summarize using Google Gemini (free tier) — or local Ollama/Mistral — at 5 AM Berlin time
 3. Send curated email digest (6 AM Berlin time)
 
-**Status**: Phase 4 Testing Complete - Email Setup Phase
+**Status**: Email delivery working (Resend) — choosing summarization LLM for cloud, then Phase 5 deploy
 
 ---
 
@@ -71,7 +71,9 @@
 | RSSParser | src/services/RSSParser.ts | Fetches and parses RSS feeds |
 | TwitterClient | src/services/TwitterClient.ts | Twitter/X API integration |
 | RedditClient | src/services/RedditClient.ts | Reddit API integration |
-| OllamaClient | src/services/OllamaClient.ts | Ollama LLM interface |
+| Summarizer | src/services/Summarizer.ts | Selects the LLM provider (Gemini/Ollama) via `LLM_PROVIDER` |
+| GeminiClient | src/services/GeminiClient.ts | Google Gemini (free-tier) LLM interface |
+| OllamaClient | src/services/OllamaClient.ts | Local Ollama LLM interface (offline fallback) |
 | SummarizationService | src/services/SummarizationService.ts | AI summarization logic |
 | EmailSender | src/services/EmailSender.ts | Resend email delivery |
 
@@ -319,7 +321,13 @@ DB_NAME=jojos_news
 DB_USER=postgres
 DB_PASSWORD=postgres
 
-# Ollama (docker-compose provides this)
+# Summarization LLM: "gemini" (cloud, free) or "ollama" (local).
+# Auto-selects gemini when GEMINI_API_KEY is set, else ollama.
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_gemini_api_key   # free key: https://aistudio.google.com
+GEMINI_MODEL=gemini-flash-latest
+
+# Ollama (local fallback; docker-compose provides this)
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=mistral
 
@@ -650,12 +658,12 @@ pkill -f "npm run dev"       # Kill backend process
 ## Getting Help
 
 1. Check `CURRENT_STATE.md` for project status
-2. Check `PHASE4_EXECUTION.md` for testing steps
-3. Check `EMAIL_SETUP_GUIDE.md` for email configuration
+2. Check `EMAIL_SETUP_GUIDE.md` for email configuration
+3. Check `HANDOFF.md` for the Phase 5+ roadmap
 4. Review backend logs: `npm run dev` output
 5. Check database: `psql -d jojos_news -c "SELECT ..."`
 
 ---
 
-**Last Updated**: 2024-07-10  
-**Status**: Phase 4 Complete - Ready for Email Setup & Phase 5
+**Last Updated**: 2026-07-10  
+**Status**: Email delivery working (Resend) — choosing summarization LLM for cloud, then Phase 5 deploy

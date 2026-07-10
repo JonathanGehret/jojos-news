@@ -1,7 +1,7 @@
 # Current State - Jojo's News Project
 
-**Last Updated**: 2024-07-10  
-**Status**: Phase 4 Testing Complete - Ready for Email Configuration & Phase 5
+**Last Updated**: 2026-07-10  
+**Status**: Email delivery working (Resend) — choosing summarization LLM for cloud, then Phase 5 deploy
 
 ---
 
@@ -25,9 +25,7 @@
 
 **Phase 4**: Testing & Validation
 - ✅ Comprehensive automated Phase 4 validator
-- ✅ PowerShell & Bash test scripts
-- ✅ PHASE4_EXECUTION.md guide
-- ✅ PHASE4_TESTING_GUIDE.md reference
+- ✅ PowerShell & Bash test scripts (`scripts/phase4-test.*`)
 - ✅ All test endpoints implemented and working
 - ✅ Test endpoints: `/api/test/aggregate-news`, `/api/test/generate-summaries`, `/api/test/send-email`
 
@@ -102,11 +100,10 @@ jojos-news/
 │
 ├── docker-compose.yml               # PostgreSQL + Ollama
 ├── README.md                        # Project overview
-├── CLAUDE.md                        # Developer guide (new)
+├── CLAUDE.md                        # Developer guide
 ├── CURRENT_STATE.md                 # This file
-├── PHASE4_TESTING_GUIDE.md          # Manual test reference
-├── PHASE4_EXECUTION.md              # Step-by-step testing guide
-└── EMAIL_SETUP_GUIDE.md             # Email configuration (new)
+├── HANDOFF.md                       # Phase 5+ roadmap
+└── EMAIL_SETUP_GUIDE.md             # Email configuration
 ```
 
 ---
@@ -380,11 +377,10 @@ npm run dev
 | File | Purpose |
 |------|---------|
 | `README.md` | Project overview and quick start |
-| `CLAUDE.md` | Developer guide and architecture (new) |
+| `CLAUDE.md` | Developer guide and architecture |
 | `CURRENT_STATE.md` | This file - current status |
-| `PHASE4_TESTING_GUIDE.md` | Manual test reference |
-| `PHASE4_EXECUTION.md` | Step-by-step testing instructions |
-| `EMAIL_SETUP_GUIDE.md` | Email configuration steps (new) |
+| `HANDOFF.md` | Phase 5+ deployment roadmap |
+| `EMAIL_SETUP_GUIDE.md` | Email configuration steps |
 
 ---
 

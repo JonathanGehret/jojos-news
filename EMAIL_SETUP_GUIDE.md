@@ -85,6 +85,13 @@ Resend provides a default domain `onboarding@resend.dev` for testing.
 **Pros**: No setup needed, works immediately  
 **Cons**: Default domain (not professional)
 
+> ⚠️ **Free-tier restriction (important):** With `onboarding@resend.dev` and **no verified
+> domain**, Resend only lets you deliver to the email address your Resend account is
+> registered under. So `EMAIL_TO` must match your Resend signup email. To send to any
+> other address, verify a real domain (Option B). Note: Firebase/Vercel platform
+> subdomains (`*.web.app`, `*.vercel.app`) **cannot** be verified for email — you need a
+> domain where you control DNS (DKIM/SPF records).
+
 ### Option B: Verify Your Domain (Professional) 🏢
 
 If you own a domain (e.g., jojosnews.com, example.com):
@@ -232,11 +239,11 @@ Should show:
   "logs": [
     {
       "id": "...",
-      "date": "2024-07-10",
+      "date": "2026-07-10",
       "recipient": "you@example.com",
-      "subject": "Jojo's News Digest - Wednesday, July 10",
+      "subject": "Jojo's News Digest - Friday, Jul 10",
       "status": "sent",
-      "sent_at": "2024-07-10T14:25:00.000Z"
+      "sent_at": "2026-07-10T14:25:00.000Z"
     }
   ]
 }
@@ -318,8 +325,8 @@ Once everything is working, here's what happens automatically:
 | 06:00 | 🔄 Aggregation: Fetches more news (~150 items) |
 | 12:00 | 🔄 Aggregation: Fetches more news (~150 items) |
 | 18:00 | 🔄 Aggregation: Fetches more news (~150 items) |
-| 03:00 | 🤖 Summarization: AI generates summaries from collected news (~2 summaries) |
-| **05:00** | **✉️ EMAIL SENT TO YOUR INBOX** 🎉 |
+| 05:00 | 🤖 Summarization: AI generates summaries from collected news (~2 summaries) |
+| **06:00** | **✉️ EMAIL SENT TO YOUR INBOX** 🎉 |
 
 **You'll receive one email per day** with the day's news summaries.
 
