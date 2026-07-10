@@ -5,7 +5,7 @@ import db from './database/connection';
 import DailyEmailJob from './jobs/dailyEmailJob';
 import AggregationScheduler from './jobs/aggregationScheduler';
 import SummarizationScheduler from './jobs/summarizationScheduler';
-import ollamaClient from './services/OllamaClient';
+import summarizer from './services/Summarizer';
 import newsAggregator from './services/NewsAggregator';
 import summarizationService from './services/SummarizationService';
 
@@ -24,13 +24,17 @@ app.get('/health', async (req: Request, res: Response) => {
     // Test database connection
     const dbHealthy = await db.queryOne('SELECT 1');
 
-    // Test Ollama connection
-    const ollamaHealthy = await ollamaClient.testConnection();
+    // Test the active summarization LLM (Gemini or Ollama)
+    const llmHealthy = await summarizer.testConnection();
 
     res.json({
       status: 'ok',
       database: dbHealthy ? 'connected' : 'disconnected',
-      ollama: ollamaHealthy ? 'connected' : 'disconnected',
+      llm: {
+        provider: summarizer.getProviderName(),
+        model: summarizer.getModelName(),
+        status: llmHealthy ? 'connected' : 'disconnected',
+      },
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

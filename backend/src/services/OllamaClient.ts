@@ -1,10 +1,11 @@
 import axios, { AxiosInstance } from 'axios';
 import { OllamaRequest, OllamaResponse } from '../types';
+import { Summarizer, buildSummaryPrompt } from './SummaryPrompt';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-export class OllamaClient {
+export class OllamaClient implements Summarizer {
   private client: AxiosInstance;
   private baseUrl: string;
   private model: string;
@@ -24,7 +25,7 @@ export class OllamaClient {
     dayOfWeek: string,
     topicName: string
   ): Promise<string> {
-    const prompt = this.buildPrompt(newsContent, dayOfWeek, topicName);
+    const prompt = buildSummaryPrompt(newsContent, dayOfWeek, topicName);
 
     try {
       const response = await this.client.post<OllamaResponse>('/api/generate', {
@@ -40,29 +41,6 @@ export class OllamaClient {
     }
   }
 
-  private buildPrompt(newsContent: string, dayOfWeek: string, topicName: string): string {
-    const basePrompt = `You are a professional news summarizer. Your task is to create a neutral, unbiased summary of the following news items.
-
-Today is: ${dayOfWeek}
-Topic Focus: ${topicName}
-
-IMPORTANT GUIDELINES:
-- Maintain absolute neutrality and objectivity
-- Avoid opinions, speculation, or editorial commentary
-- Present multiple perspectives when relevant
-- Focus on factual information only
-- Use clear, concise language
-- Organize by subtopics or importance
-- Maximum length: 500 words
-
-NEWS ITEMS TO SUMMARIZE:
-${newsContent}
-
-Please provide a professional, well-organized summary:`;
-
-    return basePrompt;
-  }
-
   async testConnection(): Promise<boolean> {
     try {
       const response = await this.client.get('/api/tags');
@@ -71,6 +49,14 @@ Please provide a professional, well-organized summary:`;
       console.error('Ollama connection test failed:', error);
       return false;
     }
+  }
+
+  getModelName(): string {
+    return this.model;
+  }
+
+  getProviderName(): string {
+    return 'ollama';
   }
 }
 

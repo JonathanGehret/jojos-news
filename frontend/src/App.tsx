@@ -70,7 +70,7 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 text-center py-8 mt-12">
-        <p>© 2024 Jojo's News Aggregator • Powered by Ollama, Resend & Open Data Sources</p>
+        <p>© 2026 Jojo's News Aggregator • Powered by Gemini, Resend & Open Data Sources</p>
       </footer>
     </div>
   );

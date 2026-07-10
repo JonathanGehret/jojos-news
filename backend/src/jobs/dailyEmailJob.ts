@@ -1,7 +1,6 @@
 import cron from 'node-cron';
 import dotenv from 'dotenv';
 import newsAggregator from '../services/NewsAggregator';
-import ollamaClient from '../services/OllamaClient';
 import emailSender from '../services/EmailSender';
 import summarizationService from '../services/SummarizationService';
 import db from '../database/connection';

@@ -1,4 +1,4 @@
-import ollamaClient from './OllamaClient';
+import summarizer from './Summarizer';
 import db from '../database/connection';
 import { NewsItem, Summary } from '../types';
 // @ts-ignore - uuid v9 type issue
@@ -55,7 +55,7 @@ export class SummarizationService {
         );
 
         try {
-          const summary = await ollamaClient.generateSummary(
+          const summary = await summarizer.generateSummary(
             chunkContent,
             dayOfWeek,
             topicName
@@ -67,7 +67,7 @@ export class SummarizationService {
             dayOfWeek: dayOfWeek,
             topicName: topicName,
             content: summary,
-            model: process.env.OLLAMA_MODEL || 'mistral',
+            model: summarizer.getModelName(),
             generatedAt: new Date(),
           };
 
