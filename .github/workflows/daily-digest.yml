@@ -2,10 +2,12 @@ name: Daily Digest
 
 on:
   schedule:
-    # 04:00 UTC. Berlin is UTC+2 in summer (CEST) -> 06:00, UTC+1 in winter
-    # (CET) -> 05:00. GitHub cron has no DST; adjust here if you want strict 6 AM.
-    - cron: '0 4 * * *'
-  # Lets you trigger a run manually from the Actions tab to test.
+    # Target: 04:00 Berlin year-round. GitHub cron is UTC with no DST, so we run
+    # two candidate times and the runner's RUN_ONLY_AT_BERLIN_HOUR guard lets
+    # only the one that equals 04:00 Berlin proceed; the other exits immediately.
+    - cron: '0 2 * * *' # 02:00 UTC = 04:00 Berlin during CEST (summer)
+    - cron: '0 3 * * *' # 03:00 UTC = 04:00 Berlin during CET (winter)
+  # Lets you trigger a run manually from the Actions tab to test (no time gate).
   workflow_dispatch: {}
 
 # Avoid overlapping runs if a previous one is still going.
@@ -41,3 +43,5 @@ jobs:
           # Set the DRY_RUN_EMAIL repository *variable* to "true" to preview
           # without sending; anything else (or unset) sends real email.
           DRY_RUN_EMAIL: ${{ vars.DRY_RUN_EMAIL }}
+          # Enforce 04:00 Berlin only on scheduled runs; manual runs are ungated.
+          RUN_ONLY_AT_BERLIN_HOUR: ${{ github.event_name == 'schedule' && '4' || '' }}

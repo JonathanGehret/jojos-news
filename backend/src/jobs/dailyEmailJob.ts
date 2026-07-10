@@ -53,22 +53,24 @@ export class DailyEmailJob {
       console.log(`Today (${dayOfWeek}): ${dayConfig.name}`);
 
       // Fetch pre-generated summaries from database
-      const summaries = await summarizationService.getSummaryForDate(today);
+      let summaries = await summarizationService.getSummaryForDate(today);
 
       if (summaries.length === 0) {
         console.warn(
           `⚠️  No summaries found for ${dayOfWeek}. Running ad-hoc summarization...`
         );
 
-        // Fallback: generate summaries on-the-fly if they weren't pre-generated
-        const generatedSummaries = await summarizationService.generateDailySummaries(
+        // Fallback: generate summaries on-the-fly if they weren't pre-generated,
+        // and actually use them (previously the empty array was still sent).
+        summaries = await summarizationService.generateDailySummaries(
           dayOfWeek,
           dayConfig.keywords
         );
 
-        if (generatedSummaries.length === 0) {
+        if (summaries.length === 0) {
           console.error(
-            '✗ No summaries generated. Sending empty/placeholder email.'
+            '✗ No summaries generated (check GEMINI_API_KEY / summarization logs). ' +
+              'Sending a placeholder email so the failure is visible.'
           );
         }
       }

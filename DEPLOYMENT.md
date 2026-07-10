@@ -71,16 +71,16 @@ Done. From now on it runs **automatically every day**.
 
 ## Schedule & timing
 
-Defined in [.github/workflows/daily-digest.yml](.github/workflows/daily-digest.yml):
+Defined in [.github/workflows/daily-digest.yml](.github/workflows/daily-digest.yml).
+The digest is sent at **04:00 Berlin time, year-round**. GitHub cron is UTC with
+no DST, so two candidate crons run (`0 2` and `0 3` UTC) and a runtime guard
+(`RUN_ONLY_AT_BERLIN_HOUR`) lets only the one equal to 04:00 Berlin proceed — the
+other exits in seconds. Manual (`workflow_dispatch`) runs are ungated, so you can
+test any time.
 
-```yaml
-schedule:
-  - cron: '0 4 * * *'   # 04:00 UTC
-```
+To change the hour, edit both cron lines **and** the `'4'` in the
+`RUN_ONLY_AT_BERLIN_HOUR` env (keep them one hour apart across the DST boundary).
 
-- **04:00 UTC = 06:00 Berlin in summer (CEST), 05:00 in winter (CET).** GitHub
-  cron has no daylight-saving handling; change the hour here if you want strict
-  6 AM year-round.
 - Scheduled Actions can be delayed a few minutes under load — fine for a digest.
 - GitHub **disables scheduled workflows after 60 days of no repo activity**. Any
   commit re-arms them.

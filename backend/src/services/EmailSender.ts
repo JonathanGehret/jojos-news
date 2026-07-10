@@ -87,7 +87,18 @@ export class EmailSender {
       day: 'numeric',
     });
 
-    const summaryHtml = summaries
+    const summaryHtml = summaries.length === 0
+      ? `
+      <section style="margin-bottom: 30px; border-left: 4px solid #f59e0b; padding-left: 20px;">
+        <h2 style="color: #1f2937; margin-top: 0; font-size: 20px;">No summary available</h2>
+        <div style="color: #4b5563; line-height: 1.6; font-size: 14px;">
+          No summaries were generated for today. This usually means the summarization
+          step failed (e.g. a missing or invalid GEMINI_API_KEY) or no news was collected.
+          Check the latest job logs.
+        </div>
+      </section>
+    `
+      : summaries
       .map(
         (summary) => `
       <section style="margin-bottom: 30px; border-left: 4px solid #3b82f6; padding-left: 20px;">

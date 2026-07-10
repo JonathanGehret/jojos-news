@@ -36,17 +36,47 @@ async function run(task: string): Promise<void> {
   }
 }
 
-const task = (process.argv[2] || 'digest').toLowerCase().trim();
-console.log(`\n=== Running task "${task}" @ ${new Date().toISOString()} ===`);
+/**
+ * Current hour (0-23) in Berlin, DST-aware. Used to gate scheduled runs so a
+ * fixed UTC cron fires at a fixed Berlin hour year-round (GitHub cron is UTC).
+ */
+function berlinHour(): number {
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Berlin',
+    hour: '2-digit',
+    hourCycle: 'h23',
+  });
+  return parseInt(fmt.format(new Date()), 10);
+}
 
-run(task)
+async function main(): Promise<void> {
+  const task = (process.argv[2] || 'digest').toLowerCase().trim();
+
+  // When RUN_ONLY_AT_BERLIN_HOUR is set (scheduled runs), only proceed at that
+  // Berlin hour. Two UTC crons straddle DST; exactly one matches, the other skips.
+  const gate = process.env.RUN_ONLY_AT_BERLIN_HOUR;
+  if (gate) {
+    const now = berlinHour();
+    if (now !== parseInt(gate, 10)) {
+      console.log(
+        `Skipping "${task}": Berlin hour is ${now}, gate is ${gate} (DST guard).`
+      );
+      return;
+    }
+  }
+
+  console.log(`\n=== Running task "${task}" @ ${new Date().toISOString()} ===`);
+  await run(task);
+  console.log(`=== Task "${task}" finished ===`);
+}
+
+main()
   .then(async () => {
-    console.log(`=== Task "${task}" finished ===`);
     await db.close();
     process.exit(0);
   })
   .catch(async (err) => {
-    console.error(`=== Task "${task}" failed ===`);
+    console.error('=== Task failed ===');
     console.error(err instanceof Error ? err.stack || err.message : err);
     await db.close();
     process.exit(1);
