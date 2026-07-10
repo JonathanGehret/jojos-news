@@ -8,13 +8,22 @@ export class Database {
   private static instance: Database;
 
   private constructor() {
-    this.pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      database: process.env.DB_NAME || 'jojos_news',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-    });
+    // Cloud managed Postgres (Neon, Railway, Supabase, ...) provides a single
+    // DATABASE_URL and requires SSL. Fall back to discrete vars for local Docker.
+    if (process.env.DATABASE_URL) {
+      this.pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+      });
+    } else {
+      this.pool = new Pool({
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        database: process.env.DB_NAME || 'jojos_news',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+      });
+    }
 
     this.pool.on('error', (err) => {
       console.error('Unexpected error on idle client', err);

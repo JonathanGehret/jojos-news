@@ -1,0 +1,43 @@
+name: Daily Digest
+
+on:
+  schedule:
+    # 04:00 UTC. Berlin is UTC+2 in summer (CEST) -> 06:00, UTC+1 in winter
+    # (CET) -> 05:00. GitHub cron has no DST; adjust here if you want strict 6 AM.
+    - cron: '0 4 * * *'
+  # Lets you trigger a run manually from the Actions tab to test.
+  workflow_dispatch: {}
+
+# Avoid overlapping runs if a previous one is still going.
+concurrency:
+  group: daily-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Run daily digest (aggregate -> summarize -> email)
+        run: npm run task -- digest
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          LLM_PROVIDER: gemini
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-flash-latest
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_TIMEZONE: Europe/Berlin
+          # Set the DRY_RUN_EMAIL repository *variable* to "true" to preview
+          # without sending; anything else (or unset) sends real email.
+          DRY_RUN_EMAIL: ${{ vars.DRY_RUN_EMAIL }}
