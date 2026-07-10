@@ -41,6 +41,19 @@ Add these **secrets**:
 | `EMAIL_FROM` | `onboarding@resend.dev` (or your verified domain) |
 | `EMAIL_TO` | the address to receive the digest |
 
+Optional **secrets** to enable Reddit as a news source (free — register a
+**script** app at https://www.reddit.com/prefs/apps):
+
+| Secret | Value |
+|--------|-------|
+| `REDDIT_CLIENT_ID` | the string under the app name |
+| `REDDIT_CLIENT_SECRET` | the app's `secret` |
+| `REDDIT_USERNAME` | your Reddit username |
+| `REDDIT_PASSWORD` | your Reddit password |
+
+Reddit is skipped automatically if these are absent. X/Twitter stays a dormant
+placeholder — its API's read access is paid-only (~$200/mo), so it's off by default.
+
 Optional **variable** (Variables tab, not Secrets):
 
 | Variable | Value | Effect |

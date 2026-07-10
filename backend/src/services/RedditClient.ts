@@ -32,6 +32,7 @@ export class RedditClient {
   private clientSecret: string;
   private username: string;
   private password: string;
+  private userAgent: string;
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
   private subreddits: string[];
@@ -41,6 +42,10 @@ export class RedditClient {
     this.clientSecret = process.env.REDDIT_CLIENT_SECRET || '';
     this.username = process.env.REDDIT_USERNAME || '';
     this.password = process.env.REDDIT_PASSWORD || '';
+
+    // Reddit's API policy requires a descriptive, unique User-Agent that names
+    // the platform, app and account. Generic UAs get rate-limited/blocked.
+    this.userAgent = `nodejs:jojos-news:v1.0 (by /u/${this.username || 'unknown'})`;
 
     // Popular subreddits for news aggregation
     this.subreddits = [
@@ -65,7 +70,7 @@ export class RedditClient {
       baseURL: 'https://oauth.reddit.com',
       timeout: 10000,
       headers: {
-        'User-Agent': 'JojosNewsBot/1.0',
+        'User-Agent': this.userAgent,
       },
     });
   }
@@ -95,7 +100,7 @@ export class RedditClient {
             password: this.clientSecret,
           },
           headers: {
-            'User-Agent': 'JojosNewsBot/1.0',
+            'User-Agent': this.userAgent,
           },
         }
       );
