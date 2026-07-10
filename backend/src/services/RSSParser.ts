@@ -60,6 +60,15 @@ export class RSSParser {
 
       // Business/Investing feeds
       { name: 'MarketWatch', url: 'https://feeds.marketwatch.com/marketwatch/topstories/', category: 'investing' },
+
+      // Reddit (best-effort): public .rss needs no API approval, but Reddit
+      // rate-limits datacenter IPs, so these often return nothing from CI — that
+      // is fine, each feed self-skips on error and the rest still run.
+      { name: 'r/worldnews', url: 'https://www.reddit.com/r/worldnews/.rss', category: 'news' },
+      { name: 'r/technology', url: 'https://www.reddit.com/r/technology/.rss', category: 'tech' },
+      { name: 'r/science', url: 'https://www.reddit.com/r/science/.rss', category: 'science' },
+      { name: 'r/europe', url: 'https://www.reddit.com/r/europe/.rss', category: 'europe' },
+      { name: 'r/germany', url: 'https://www.reddit.com/r/germany/.rss', category: 'germany' },
     ];
   }
 
