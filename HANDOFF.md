@@ -41,87 +41,118 @@ The entire email delivery system is **production-ready**. The user only needs to
 
 ---
 
-## Future Development Tasks (If Needed)
+## Future Development Tasks
 
-### Phase 5: Dashboard Enhancement
+### Phase 5: Cloud Deployment ⭐ (PRIORITY - Next Agent Task)
+
+**Current State**: System runs locally only. Needs 24/7 cloud server to send daily emails automatically.
+
+**Cloud Deployment Options**:
+
+| Platform | Cost | Ease | Good For |
+|----------|------|------|----------|
+| **Heroku** | $50-100/mo | ⭐⭐⭐⭐ Easiest | Quick deployment, no DevOps needed |
+| **Railway.app** | $20-50/mo | ⭐⭐⭐⭐ Very Easy | Modern, Git-based deployment |
+| **Render** | $15-40/mo | ⭐⭐⭐⭐ Easy | Good free tier, auto-deploys from Git |
+| **AWS EC2** | $10-30/mo | ⭐⭐ Medium | Full control, more setup |
+| **DigitalOcean** | $12-30/mo | ⭐⭐⭐ Medium | Droplets, good docs |
+
+**Deployment Tasks**:
+
+1. **Choose Platform** (recommend: Railway.app or Render for easiest)
+
+2. **Database Setup**
+   - [ ] Provision managed PostgreSQL (Heroku Postgres, Railway Postgres, etc.)
+   - [ ] Run migrations on production database
+   - [ ] Verify database is accessible from server
+
+3. **Docker Setup**
+   - [ ] Create `Dockerfile` for backend
+   - [ ] Create `Dockerfile` for frontend (or use static hosting)
+   - [ ] Create `docker-compose.yml` for production
+   - [ ] Test Docker build locally
+
+4. **Ollama on Production**
+   - **Option A** (Recommended): Use managed LLM API (e.g., Groq, Together AI)
+   - **Option B**: Run Ollama in separate container on same server
+   - **Option C**: Use external Ollama API service
+
+5. **Environment Configuration**
+   - [ ] Set production environment variables on server
+   - [ ] Verify Resend API key is set
+   - [ ] Configure database URL
+   - [ ] Configure Ollama endpoint
+
+6. **Deployment**
+   - [ ] Push code to GitHub
+   - [ ] Connect to cloud platform
+   - [ ] Enable auto-deployment on git push
+   - [ ] Deploy and test
+
+7. **Monitoring & Maintenance**
+   - [ ] Set up error logging (Sentry or similar)
+   - [ ] Add email delivery monitoring
+   - [ ] Configure automatic restarts if crash
+   - [ ] Set up uptime monitoring
+
+**Code Changes Needed**: ~3-4 hours (mostly env config, minimal code changes)
+
+**Example Production Config**:
+```typescript
+// backend/src/config/index.ts (ADD THIS)
+export const config = {
+  isProduction: process.env.NODE_ENV === 'production',
+  database: {
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production',
+    max: process.env.NODE_ENV === 'production' ? 20 : 5,
+  },
+  ollama: {
+    baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+    model: process.env.OLLAMA_MODEL || 'mistral',
+  },
+  email: {
+    apiKey: process.env.RESEND_API_KEY,
+    from: process.env.EMAIL_FROM,
+    to: process.env.EMAIL_TO,
+  },
+};
+```
+
+**After Deployment**:
+- ✅ System runs 24/7 automatically
+- ✅ Emails sent daily at 6 AM Berlin time
+- ✅ No need for local PC to be running
+- ✅ System is production-ready
+
+**Estimated Time**: 3-5 days (depending on platform complexity)
+
+### Phase 6: Dashboard Enhancement
 
 **Current State**: Frontend exists with basic pages
 - Dashboard.tsx: Shows summaries (works)
 - Admin.tsx: Shows preferences form (works)
 - EmailLogs.tsx: Shows email delivery logs (works)
 
-**Enhancements** (not urgent):
+**Enhancements** (not urgent, can do after deployment):
 
-1. **Real-time Updates**
+1. **Analytics & Charts**
+   - Aggregation trends over time
+   - Top sources/topics distribution
+   - Email delivery history
+   - Work: Add recharts library + new API endpoints
+
+2. **Real-time Updates**
    - WebSocket connection to backend
    - Live aggregation progress
-   - Live email sending status
-   - Work: Update frontend + backend with socket.io
+   - Work: Add socket.io
 
-2. **Analytics & Charts**
-   - Email open rates (requires email tracking pixel)
-   - Aggregation trends over time (needs charting library)
-   - Top sources/topics distribution
-   - Work: Add recharts or D3.js + new API endpoints
-
-3. **Preference UI**
+3. **Better Preference UI**
    - Current: Form-based preferences work via API
    - Enhancement: Better UX with toggles, checkboxes
-   - Add per-topic customization
    - Work: React component updates
 
-**Effort**: Low to Medium (2-3 days)
-
-### Phase 6: Deployment & Production Ready
-
-**Current State**: Runs locally on dev machine
-
-**Deployment Tasks**:
-
-1. **Infrastructure**
-   - [ ] Provision production server (AWS EC2, DigitalOcean, Heroku, etc.)
-   - [ ] Set up PostgreSQL database (managed service or self-hosted)
-   - [ ] Set up Ollama on production (or use API endpoint)
-   - [ ] Configure reverse proxy (nginx/Apache)
-   - [ ] SSL/TLS certificates (Let's Encrypt)
-
-2. **Code Changes for Production**
-   - [ ] Environment configuration for prod vs dev
-   - [ ] Database connection pooling optimization
-   - [ ] Error logging and monitoring (Sentry)
-   - [ ] Add API rate limiting
-   - [ ] Add request logging
-
-3. **Docker/Container Setup**
-   - [ ] Create Dockerfile for backend
-   - [ ] Create Dockerfile for frontend
-   - [ ] Docker Compose for production
-   - [ ] Push to Docker Hub/private registry
-
-4. **CI/CD Pipeline**
-   - [ ] GitHub Actions for automated testing
-   - [ ] Automated deployment on push to main
-   - [ ] Database migration automation
-   - [ ] Rollback procedures
-
-**Code Changes Needed**: Medium (~1-2 days coding)
-
-**Example Work**:
-```typescript
-// backend/src/config/index.ts
-export const config = {
-  isProduction: process.env.NODE_ENV === 'production',
-  database: {
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432'),
-    max: process.env.NODE_ENV === 'production' ? 20 : 5,  // Connection pool
-  },
-  logging: {
-    level: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
-    transport: process.env.NODE_ENV === 'production' ? 'sentry' : 'console',
-  },
-};
-```
+**Effort**: Low to Medium (2-3 days after deployment)
 
 ### Phase 7: Advanced Features
 
@@ -276,17 +307,22 @@ Add before deploying:
 
 ## Recommendations for Next Agent
 
-If someone continues this project:
+**Project Status**: Email delivery working locally ✅ | Ready for cloud deployment ✅
 
-### First Priority
-1. ✅ Get email working (user follows EMAIL_SETUP_GUIDE.md)
-2. 🔍 Verify daily emails are arriving (at 6 AM Berlin time)
-3. 📊 Monitor for 1 week to ensure stability
+### Priority: Cloud Deployment (Phase 5)
 
-### If Everything is Stable
-1. **Phase 5**: Enhance dashboard with charts/analytics (3-5 days)
-2. **Phase 6**: Deploy to production (5-10 days)
-3. **Phase 7**: Add advanced features as requested (varies)
+The user wants system running in cloud 24/7, not locally. **Next agent should**:
+
+1. **Pick a platform** (Railway.app or Render recommended - easiest)
+2. **Set up production database** (managed PostgreSQL)
+3. **Create Docker images** for backend/frontend
+4. **Deploy** code to cloud platform
+5. **Test** that emails arrive daily at 6 AM Berlin time from cloud server
+6. **Monitor** for stability
+
+### If Deployment Goes Smoothly
+1. **Phase 6**: Enhance dashboard with analytics (3-5 days, optional)
+2. **Phase 7**: Add advanced features (varies, optional)
 
 ### Code Quality Notes
 - ✅ Good TypeScript coverage
@@ -303,17 +339,27 @@ If someone continues this project:
 
 ---
 
-## Quick Handoff Checklist
+## Quick Handoff Checklist for Next Agent
 
-If passing to another agent/developer:
+**Goal**: Deploy to cloud for 24/7 operation
 
-- [ ] Ask user: "Have you completed EMAIL_SETUP_GUIDE.md?"
-- [ ] Ask user: "Are you receiving daily emails at 6 AM?"
-- [ ] Verify: `curl http://localhost:3001/health` works
-- [ ] Verify: `curl http://localhost:3001/api/logs` shows recent emails
-- [ ] Read: CLAUDE.md and CURRENT_STATE.md
-- [ ] Run: `./scripts/phase4-test.ps1` to verify all systems
-- [ ] Then proceed with Phase 5+ as requested
+- [x] Email delivery setup complete (Resend working)
+- [x] Test email sent successfully
+- [ ] **Read**: CLAUDE.md, CURRENT_STATE.md, HANDOFF.md (this file)
+- [ ] **Understand**: System architecture and Phase 5 cloud deployment plan
+- [ ] **Choose**: Cloud platform (Railway.app, Render, Heroku, DigitalOcean, or AWS)
+- [ ] **Create**: Deployment plan specific to chosen platform
+- [ ] **Implement**: Docker setup, database provisioning, deployment
+- [ ] **Test**: Verify emails arrive daily from cloud server
+- [ ] **Monitor**: Check stability for 1 week
+
+**Key Files for Next Agent**:
+- `CLAUDE.md` - Architecture & how system works
+- `CURRENT_STATE.md` - Current status & daily schedule
+- `HANDOFF.md` - Phase 5 deployment guide (this file)
+- `backend/.env` - Current config (needs updating for production)
+- `backend/src/index.ts` - Main server & routes
+- `docker-compose.yml` - Current local setup (needs production version)
 
 ---
 

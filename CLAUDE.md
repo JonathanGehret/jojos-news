@@ -584,22 +584,36 @@ cd frontend && npm run dev
 
 ## Future Enhancements
 
-### Phase 5: Dashboard Enhancement
+### Phase 5: Cloud Deployment ⭐ (PRIORITY)
+Deploy to production cloud server - system will run 24/7 without local PC
+
+**Infrastructure Options**:
+- AWS EC2 + RDS + Docker
+- DigitalOcean + Managed Postgres
+- Heroku (easiest, ~$50/month)
+- Railway.app or Render (alternative PaaS)
+
+**Required Work**:
+- Set up cloud server & database
+- Create production Dockerfile
+- Configure environment for production
+- Set up monitoring & alerting
+- Enable automatic restarts
+- Configure SSL/TLS
+
+**Estimated Time**: 1-2 weeks (includes testing)
+
+### Phase 6: Dashboard Enhancement
 - Real-time summary updates
 - Email preference UI
 - Aggregation trend analytics
 - Email delivery statistics
-
-### Phase 6: Deployment
-- Production database setup
-- Email domain verification
-- SSL/TLS certificates
-- Monitoring and alerting
+- Add charts with recharts/D3.js
 
 ### Phase 7: Advanced Features
 - User authentication system
 - Per-user topic customization
-- SMS delivery option
+- SMS delivery option (Twilio)
 - Slack integration
 - Real-time news updates (WebSocket)
 
