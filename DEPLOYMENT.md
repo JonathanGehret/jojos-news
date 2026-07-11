@@ -84,17 +84,18 @@ Done. From now on it runs **automatically every day**.
 
 ## Schedule & timing
 
-Defined in [.github/workflows/daily-digest.yml](.github/workflows/daily-digest.yml).
-The digest is sent at **04:00 Berlin time, year-round**. GitHub cron is UTC with
-no DST, so two candidate crons run (`0 2` and `0 3` UTC) and a runtime guard
-(`RUN_ONLY_AT_BERLIN_HOUR`) lets only the one equal to 04:00 Berlin proceed — the
-other exits in seconds. Manual (`workflow_dispatch`) runs are ungated, so you can
-test any time.
+Defined in [.github/workflows/daily-digest.yml](.github/workflows/daily-digest.yml):
+one fixed daily cron, `13 2 * * *` (02:13 UTC). That lands at **~04:00 Berlin in
+summer (CEST) and ~03:00 in winter (CET)** — we accept the 1-hour DST drift on
+purpose. GitHub cron is UTC with no DST, and scheduled runs are often delayed, so
+gating on an exact Berlin hour would skip delayed runs entirely (which is exactly
+what used to happen). A fixed run can only arrive a little later, never skip.
 
-To change the hour, edit both cron lines **and** the `'4'` in the
-`RUN_ONLY_AT_BERLIN_HOUR` env (keep them one hour apart across the DST boundary).
+To change the time, edit the single `cron` line (it's UTC). Manual
+(`workflow_dispatch`) runs from the Actions tab work any time, for testing.
 
-- Scheduled Actions can be delayed a few minutes under load — fine for a digest.
+- Scheduled Actions are often delayed 15–60+ min under load — fine for a digest,
+  and the `:13` minute avoids the worst top-of-hour backlog.
 - GitHub **disables scheduled workflows after 60 days of no repo activity**. Any
   commit re-arms them.
 
