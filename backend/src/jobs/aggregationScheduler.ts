@@ -33,10 +33,11 @@ export class AggregationScheduler {
 
   async execute(): Promise<void> {
     try {
-      // Get all unique keywords from all days' configurations
+      // Union of keywords across every category — aggregation is category-agnostic;
+      // the summarizer is what splits news back out per category.
       const allKeywords = new Set<string>();
-      Object.values(topicsConfig).forEach((dayConfig: any) => {
-        dayConfig.keywords.forEach((keyword: string) => {
+      topicsConfig.categories.forEach((category) => {
+        category.keywords.forEach((keyword: string) => {
           allKeywords.add(keyword);
         });
       });

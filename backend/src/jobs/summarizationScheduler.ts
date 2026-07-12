@@ -1,6 +1,5 @@
 import cron from 'node-cron';
 import summarizationService from '../services/SummarizationService';
-import topicsConfig from '../config/topics.json';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -34,38 +33,17 @@ export class SummarizationScheduler {
 
   async execute(): Promise<void> {
     try {
-      console.log('Starting daily news summarization...');
+      console.log('Starting daily news summarization (all categories)...');
 
-      const today = new Date();
-      const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
-      const dayOfWeekLower = dayOfWeek.toLowerCase();
-
-      // Get topic config for today
-      const dayConfig = (topicsConfig as any)[dayOfWeekLower];
-      if (!dayConfig) {
-        throw new Error(`No topic configuration found for day: ${dayOfWeek}`);
-      }
-
-      console.log(`Today (${dayOfWeek}): ${dayConfig.name}`);
-      console.log(`Keywords: ${dayConfig.keywords.join(', ')}`);
-      console.log(`Focus: ${dayConfig.focus}`);
-
-      // Generate summaries for today
-      const summaries = await summarizationService.generateDailySummaries(
-        dayOfWeek,
-        dayConfig.keywords
-      );
+      const { summaries, quiet } =
+        await summarizationService.generateSummariesForAllCategories();
 
       console.log(
-        `\n✓ Daily summarization complete: Generated ${summaries.length} summary(ies)`
+        `\n✓ Daily summarization complete: ${summaries.length} summary(ies), ${quiet.length} quiet`
       );
 
-      // Log summary statistics
       const totalChars = summaries.reduce((sum, s) => sum + s.content.length, 0);
       console.log(`  Total content: ${totalChars} characters`);
-      console.log(
-        `  Ready for email delivery at 6 AM ${today.toLocaleDateString()}`
-      );
     } catch (error) {
       console.error('Error in summarization job:', error);
 

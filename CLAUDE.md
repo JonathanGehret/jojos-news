@@ -49,7 +49,7 @@
 **SummarizationScheduler** (src/jobs/summarizationScheduler.ts)
 - Cron: 0 3 * * * (UTC) = 5 AM Berlin time
 - Calls SummarizationService.generateDailySummaries()
-- Filters news by today's topic keywords
+- Generates one summary per category (all categories, every day)
 - Batches items for Ollama processing
 - Stores ~2 summaries to summaries table
 
@@ -119,21 +119,31 @@
 
 4. Add env vars for credentials in `.env`
 
-### Customizing Daily Topics
+### Customizing Categories
 
-Edit `backend/src/config/topics.json`:
+Every category is summarized **every day**. Edit `backend/src/config/topics.json`:
 
 ```json
 {
-  "monday": {
-    "name": "Musk, Trump & AI Tech",
-    "keywords": ["Musk", "Elon", "Trump", "AI", "Tech"],
-    "focus": "Focus on tech leaders and AI developments"
-  }
+  "categories": [
+    {
+      "id": "ai-tech",
+      "name": "AI & Technology",
+      "keywords": ["AI", "OpenAI", "Anthropic", "Nvidia"],
+      "focus": "What belongs in this category — the LLM uses this to filter out
+                keyword-matched items that don't actually fit."
+    }
+  ]
 }
 ```
 
-Keywords are used to filter news items during summarization.
+- `keywords` select news items via **whole-word** matching (a bare substring match
+  would let "AI" hit "said"/"Ukraine" and "war" hit "award").
+- `focus` is passed to the LLM to discard off-topic matches; if nothing fits it
+  returns `NO_RELEVANT_NEWS` and the category is reported as "quiet" instead of
+  padding the email with noise.
+- Adding a category usually means adding an RSS feed in `RSSParser.ts` that
+  actually carries that content.
 
 ### Changing Email Send Time
 
@@ -557,7 +567,7 @@ cd frontend && npm run dev
 - Batches items (~50 per batch) to stay within Ollama token limits
 - Ollama runs locally (no API latency)
 - Mistral model ~15-30s per batch
-- Generates 2 summaries per day (by day-of-week topic)
+- Generates one summary per category per day (~11 categories, one Gemini call each)
 
 ### Email Delivery
 - Single email per day to one recipient

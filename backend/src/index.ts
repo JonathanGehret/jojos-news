@@ -226,27 +226,14 @@ app.post('/api/test/generate-summaries', async (req: Request, res: Response) => 
   try {
     console.log('Manual summarization triggered via API');
 
-    const today = new Date();
-    const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
-    const topicsConfig = require('./config/topics.json');
-    const dayConfig = (topicsConfig as any)[dayOfWeek.toLowerCase()];
-
-    if (!dayConfig) {
-      return res.status(400).json({
-        error: `No topic configuration found for day: ${dayOfWeek}`,
-      });
-    }
-
-    const summaries = await summarizationService.generateDailySummaries(
-      dayOfWeek,
-      dayConfig.keywords
-    );
+    const { summaries, quiet } =
+      await summarizationService.generateSummariesForAllCategories();
 
     res.json({
       message: 'Summarization executed successfully',
       summariesGenerated: summaries.length,
-      dayOfWeek: dayOfWeek,
-      topicName: dayConfig.name,
+      topics: summaries.map((s) => s.topicName),
+      quietCategories: quiet,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

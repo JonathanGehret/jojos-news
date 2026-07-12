@@ -22,10 +22,10 @@ export class OllamaClient implements Summarizer {
 
   async generateSummary(
     newsContent: string,
-    dayOfWeek: string,
-    topicName: string
+    categoryName: string,
+    focus: string
   ): Promise<string> {
-    const prompt = buildSummaryPrompt(newsContent, dayOfWeek, topicName);
+    const prompt = buildSummaryPrompt(newsContent, categoryName, focus);
 
     try {
       const response = await this.client.post<OllamaResponse>('/api/generate', {

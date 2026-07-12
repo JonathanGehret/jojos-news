@@ -4,9 +4,6 @@ import newsAggregator from '../services/NewsAggregator';
 import emailSender from '../services/EmailSender';
 import summarizationService from '../services/SummarizationService';
 import db from '../database/connection';
-import topicsConfig from '../config/topics.json';
-// @ts-ignore - uuid v9 type issue
-import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
 
@@ -39,33 +36,23 @@ export class DailyEmailJob {
     try {
       console.log('Starting daily email generation and sending...');
 
-      // Get today's day of week
       const today = new Date();
       const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
-      const dayOfWeekLower = dayOfWeek.toLowerCase();
 
-      // Get topic config for today
-      const dayConfig = (topicsConfig as any)[dayOfWeekLower];
-      if (!dayConfig) {
-        throw new Error(`No topic configuration found for day: ${dayOfWeek}`);
-      }
-
-      console.log(`Today (${dayOfWeek}): ${dayConfig.name}`);
-
-      // Fetch pre-generated summaries from database
+      // Fetch today's pre-generated summaries (one per category with news)
       let summaries = await summarizationService.getSummaryForDate(today);
+      let quiet: string[] = [];
 
       if (summaries.length === 0) {
         console.warn(
           `⚠️  No summaries found for ${dayOfWeek}. Running ad-hoc summarization...`
         );
 
-        // Fallback: generate summaries on-the-fly if they weren't pre-generated,
-        // and actually use them (previously the empty array was still sent).
-        summaries = await summarizationService.generateDailySummaries(
-          dayOfWeek,
-          dayConfig.keywords
-        );
+        // Fallback: generate on the fly if they weren't pre-generated, and
+        // actually use them (previously the empty array was still sent).
+        const result = await summarizationService.generateSummariesForAllCategories();
+        summaries = result.summaries;
+        quiet = result.quiet;
 
         if (summaries.length === 0) {
           console.error(
@@ -73,6 +60,13 @@ export class DailyEmailJob {
               'Sending a placeholder email so the failure is visible.'
           );
         }
+      } else {
+        // Summaries already exist: anything without one was quiet today.
+        const covered = new Set(summaries.map((s) => s.topicName));
+        quiet = summarizationService
+          .getCategories()
+          .map((c) => c.name)
+          .filter((name) => !covered.has(name));
       }
 
       // Prepare email content
@@ -81,10 +75,14 @@ export class DailyEmailJob {
         content: s.content,
       }));
 
-      console.log(`Sending email with ${emailSummaries.length} summary(ies)...`);
+      console.log(
+        `Sending email with ${emailSummaries.length} summary(ies)` +
+          (quiet.length > 0 ? `, ${quiet.length} quiet category(ies)` : '') +
+          '...'
+      );
 
       // Send email
-      const emailSent = await emailSender.sendDailySummary(emailSummaries, today);
+      const emailSent = await emailSender.sendDailySummary(emailSummaries, today, quiet);
 
       if (emailSent) {
         console.log('✓ Daily email sent successfully');

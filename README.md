@@ -10,10 +10,12 @@ An AI-powered daily news ticker that aggregates from multiple sources (Twitter/X
 - ✉️ Daily email delivery at 6 AM Berlin time via Resend
 - 📊 Web dashboard to view summaries and email logs
 - ⚙️ Admin panel for customizing topic focus and preferences
-- 📅 Daily topic rotation:
-  - **Mon/Wed/Fri**: Musk, Trump, AI/Tech focus
-  - **Tue/Thu/Sat**: Nature, Physics, German/EU Politics, Sonneborn
-  - **Sunday**: General news + Investing
+- 📅 **Full palette every day** — one summary per category, daily (11 categories):
+  AI & Technology · Elon Musk & US Politics · Science, Nature & Physics ·
+  German & EU Politics · World News · Investing & Markets · Space & Astronomy ·
+  Health & Medicine · Geopolitics & Defense · Energy · Gaming: AI & Board Games
+  - Categories are defined in [backend/src/config/topics.json](backend/src/config/topics.json)
+  - Categories with no notable news are skipped and listed as "quiet" in the email footer
 
 ## Project Structure
 
@@ -250,7 +252,8 @@ The system uses a three-tier architecture for reliable news delivery:
 - Keyword-based tagging
 
 **2. Summarization (5 AM Daily)**
-- Fetches last 24 hours of news for today's topic keywords
+- Fetches last 24 hours of news and splits it per category by keyword (whole-word match)
+- Generates one summary per category; categories with no relevant news are skipped
 - Batches items to stay within Ollama's token limits (~50 items per batch)
 - Generates neutral, unbiased summaries using Ollama
 - Stores summaries to `summaries` table

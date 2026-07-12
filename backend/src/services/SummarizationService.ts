@@ -1,110 +1,125 @@
 import summarizer from './Summarizer';
 import db from '../database/connection';
 import { NewsItem, Summary } from '../types';
+import topicsConfig from '../config/topics.json';
 // @ts-ignore - uuid v9 type issue
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-interface NewsByTopic {
-  topicName: string;
-  dayOfWeek: string;
-  newsItems: NewsItem[];
+export interface TopicCategory {
+  id: string;
+  name: string;
+  keywords: string[];
+  focus: string;
+}
+
+export interface CategoryRunResult {
+  summaries: Summary[];
+  /** Categories that had no news (or no relevant news) today. */
+  quiet: string[];
 }
 
 export class SummarizationService {
-  private maxTokensPerRequest = 2000; // Conservative limit for Ollama
-  private averageTokensPerItem = 50; // Rough estimate: title + description
+  /** Max news items fed to the LLM per category. Gemini handles this in one call. */
+  private maxItemsPerCategory = 35;
 
-  async generateDailySummaries(dayOfWeek: string, keywords: string[]): Promise<Summary[]> {
-    try {
-      console.log(`\n📝 Generating summaries for ${dayOfWeek}...`);
-
-      // Fetch news items for today's keywords
-      const newsItems = await this.fetchNewsForKeywords(keywords);
-
-      if (newsItems.length === 0) {
-        console.warn(`⚠️  No news items found for ${dayOfWeek} with keywords: ${keywords.join(', ')}`);
-        // Still generate a summary, just with a note
-      }
-
-      // Get topic config for this day (to build focus description)
-      const topicsConfig = require('../config/topics.json');
-      const dayConfig = (topicsConfig as any)[dayOfWeek.toLowerCase()];
-
-      if (!dayConfig) {
-        throw new Error(`No topic configuration found for day: ${dayOfWeek}`);
-      }
-
-      const topicName = dayConfig.name;
-      const focus = dayConfig.focus;
-
-      // Chunk news items for Ollama (stay within token limit)
-      const chunks = this.chunkNewsItems(newsItems);
-
-      // Generate summaries for each chunk
-      const summaries: Summary[] = [];
-
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        const chunkContent = this.formatNewsForSummary(chunk);
-
-        console.log(
-          `  Generating summary ${i + 1}/${chunks.length} (${chunk.length} items)...`
-        );
-
-        try {
-          const summary = await summarizer.generateSummary(
-            chunkContent,
-            dayOfWeek,
-            topicName
-          );
-
-          const summaryRecord: Summary = {
-            id: uuidv4(),
-            date: new Date(),
-            dayOfWeek: dayOfWeek,
-            topicName: topicName,
-            content: summary,
-            model: summarizer.getModelName(),
-            generatedAt: new Date(),
-          };
-
-          // Store in database
-          await this.storeSummary(summaryRecord);
-          summaries.push(summaryRecord);
-
-          console.log(`  ✓ Summary ${i + 1}/${chunks.length} generated and stored`);
-        } catch (error) {
-          console.error(`Error generating summary chunk ${i + 1}:`, error);
-          // Continue with next chunk
-        }
-      }
-
-      console.log(
-        `✓ Generated ${summaries.length} summary(ies) for ${dayOfWeek}: ${topicName}`
-      );
-
-      return summaries;
-    } catch (error) {
-      console.error('Error in SummarizationService.generateDailySummaries:', error);
-      throw error;
-    }
+  getCategories(): TopicCategory[] {
+    return (topicsConfig as { categories: TopicCategory[] }).categories;
   }
 
-  private async fetchNewsForKeywords(keywords: string[]): Promise<NewsItem[]> {
+  /**
+   * Generates one summary per category for today — the full daily palette.
+   * Categories with no matching news, or where the model reports nothing
+   * relevant, are skipped and reported as "quiet" rather than emailed as noise.
+   */
+  async generateSummariesForAllCategories(): Promise<CategoryRunResult> {
+    const categories = this.getCategories();
+    const summaries: Summary[] = [];
+    const quiet: string[] = [];
+
+    console.log(`\n📝 Generating summaries for ${categories.length} categories...`);
+
+    for (const category of categories) {
+      try {
+        const newsItems = await this.fetchNewsForKeywords(
+          category.keywords,
+          this.maxItemsPerCategory
+        );
+
+        if (newsItems.length === 0) {
+          console.warn(`  ⚠️  ${category.name}: no matching news — skipping`);
+          quiet.push(category.name);
+          continue;
+        }
+
+        console.log(`  Summarizing ${category.name} (${newsItems.length} items)...`);
+
+        const content = await summarizer.generateSummary(
+          this.formatNewsForSummary(newsItems),
+          category.name,
+          category.focus
+        );
+
+        // The prompt asks the model to emit this when nothing genuinely fits the
+        // category (keyword matching is fuzzy, especially for niche categories).
+        if (content.trim().toUpperCase().startsWith('NO_RELEVANT_NEWS')) {
+          console.warn(`  ⚠️  ${category.name}: no relevant news — skipping`);
+          quiet.push(category.name);
+          continue;
+        }
+
+        const summary: Summary = {
+          id: uuidv4(),
+          date: new Date(),
+          dayOfWeek: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
+          topicName: category.name,
+          content: content,
+          model: summarizer.getModelName(),
+          generatedAt: new Date(),
+        };
+
+        await this.storeSummary(summary);
+        summaries.push(summary);
+        console.log(`  ✓ ${category.name} generated and stored`);
+      } catch (error) {
+        console.error(`  ✗ Error summarizing ${category.name}:`, error);
+        quiet.push(category.name);
+        // Continue with the next category — one failure shouldn't kill the digest.
+      }
+    }
+
+    console.log(
+      `\n✓ Summarization complete: ${summaries.length} summaries, ${quiet.length} quiet`
+    );
+    if (quiet.length > 0) {
+      console.log(`  Quiet categories: ${quiet.join(', ')}`);
+    }
+
+    return { summaries, quiet };
+  }
+
+  private async fetchNewsForKeywords(
+    keywords: string[],
+    limit: number = 100
+  ): Promise<NewsItem[]> {
     const placeholders = keywords.map((_, i) => `$${i + 1}`).join(',');
+    // Whole-word title match (\y = word boundary). A plain '%AI%' ILIKE would also
+    // match "said"/"Ukraine", and '%war%' would match "award", flooding categories.
+    const wordPatterns = keywords
+      .map((_, i) => `'\\y' || $${i + 1} || '\\y'`)
+      .join(',');
 
     const query = `
-      SELECT 
-        id, title, description, url, source, source_url, author, 
+      SELECT
+        id, title, description, url, source, source_url, author,
         published_at, fetched_at, topic_tags, content
-      FROM news_items 
+      FROM news_items
       WHERE fetched_at >= NOW() - INTERVAL '24 hours'
-        AND (topic_tags && ARRAY[${placeholders}] OR title ILIKE ANY(ARRAY[${placeholders}]))
+        AND (topic_tags && ARRAY[${placeholders}] OR title ~* ANY(ARRAY[${wordPatterns}]))
       ORDER BY published_at DESC
-      LIMIT 100
+      LIMIT ${limit}
     `;
 
     try {
@@ -128,24 +143,6 @@ export class SummarizationService {
       console.error('Error fetching news items:', error);
       return [];
     }
-  }
-
-  private chunkNewsItems(items: NewsItem[]): NewsItem[][] {
-    const maxItemsPerChunk = Math.floor(
-      this.maxTokensPerRequest / this.averageTokensPerItem
-    );
-    const chunks: NewsItem[][] = [];
-
-    for (let i = 0; i < items.length; i += maxItemsPerChunk) {
-      chunks.push(items.slice(i, i + maxItemsPerChunk));
-    }
-
-    // If no items, return one empty chunk
-    if (chunks.length === 0) {
-      chunks.push([]);
-    }
-
-    return chunks;
   }
 
   private formatNewsForSummary(items: NewsItem[]): string {

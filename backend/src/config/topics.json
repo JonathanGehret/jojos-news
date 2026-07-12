@@ -1,37 +1,111 @@
 {
-  "monday": {
-    "name": "Musk, Trump & AI Tech",
-    "keywords": ["Musk", "Elon", "Trump", "AI", "artificial intelligence", "machine learning"],
-    "focus": "Focus on Elon Musk's ventures, Trump developments, and AI/Tech breakthroughs"
-  },
-  "tuesday": {
-    "name": "Nature & Physics",
-    "keywords": ["nature", "physics", "science", "climate", "environment", "discovery"],
-    "focus": "Focus on natural sciences, physics research, climate, and environmental news"
-  },
-  "wednesday": {
-    "name": "Musk, Trump & AI Tech",
-    "keywords": ["Musk", "Elon", "Trump", "AI", "artificial intelligence", "tech"],
-    "focus": "Focus on Elon Musk's ventures, Trump developments, and AI/Tech breakthroughs"
-  },
-  "thursday": {
-    "name": "German & EU Politics",
-    "keywords": ["Germany", "Berlin", "EU", "Europe", "German politics", "Sonneborn", "AfD"],
-    "focus": "Focus on German politics, EU developments, and Sonneborn statements"
-  },
-  "friday": {
-    "name": "Musk, Trump & AI Tech",
-    "keywords": ["Musk", "Elon", "Trump", "AI", "artificial intelligence", "tech"],
-    "focus": "Focus on Elon Musk's ventures, Trump developments, and AI/Tech breakthroughs"
-  },
-  "saturday": {
-    "name": "German & EU Politics",
-    "keywords": ["Germany", "Berlin", "EU", "Europe", "German politics", "Sonneborn", "AfD"],
-    "focus": "Focus on German politics, EU developments, and Sonneborn statements"
-  },
-  "sunday": {
-    "name": "General News & Investing",
-    "keywords": ["news", "world", "market", "investing", "stocks", "economy", "finance"],
-    "focus": "Focus on general world news, investing trends, stock market updates"
-  }
+  "categories": [
+    {
+      "id": "ai-tech",
+      "name": "AI & Technology",
+      "keywords": [
+        "AI", "artificial intelligence", "machine learning", "LLM", "large language model",
+        "AI agent", "agentic", "OpenAI", "Anthropic", "Claude", "Claude Code", "Codex",
+        "ChatGPT", "GPT", "Gemini", "Copilot", "vibe coding", "Nvidia", "GPU", "inference",
+        "neural network", "transformer", "generative AI", "chatbot"
+      ],
+      "focus": "AI research and products, AI agents and agentic tooling, coding assistants (Claude Code, Codex, Copilot, vibe coding), the major labs (OpenAI, Anthropic, Google DeepMind), and AI hardware such as Nvidia GPUs. Include notable general tech developments."
+    },
+    {
+      "id": "musk-us-politics",
+      "name": "Elon Musk & US Politics",
+      "keywords": [
+        "Musk", "Elon", "Tesla", "SpaceX", "xAI", "Grok", "Neuralink", "Starlink",
+        "Trump", "White House", "Congress", "Senate", "US politics", "Washington", "Republican", "Democrat"
+      ],
+      "focus": "Elon Musk's ventures and statements, and US political developments including the Trump administration, Congress, and major policy moves."
+    },
+    {
+      "id": "science",
+      "name": "Science, Nature & Physics",
+      "keywords": [
+        "physics", "quantum", "nature", "science", "research", "study", "discovery",
+        "biology", "chemistry", "scientists", "experiment", "particle", "evolution"
+      ],
+      "focus": "Fundamental science: physics, quantum research, biology, chemistry, and notable discoveries from the natural world. Exclude space and health, which have their own categories."
+    },
+    {
+      "id": "german-eu-politics",
+      "name": "German & EU Politics",
+      "keywords": [
+        "Germany", "German", "Berlin", "Bundestag", "Scholz", "Merz", "AfD", "Sonneborn",
+        "EU", "European Union", "Europe", "Brussels", "European Commission", "Bundesbank"
+      ],
+      "focus": "German domestic politics, EU institutions and policy, Brussels decision-making, and Martin Sonneborn's statements."
+    },
+    {
+      "id": "world-news",
+      "name": "World News",
+      "keywords": [
+        "world", "international", "global", "election", "government", "protest",
+        "president", "prime minister", "summit", "crisis"
+      ],
+      "focus": "Significant general world news and major international events that don't fall neatly into the other categories."
+    },
+    {
+      "id": "investing",
+      "name": "Investing & Markets",
+      "keywords": [
+        "market", "stocks", "stock market", "investing", "investor", "shares", "economy",
+        "finance", "earnings", "inflation", "interest rate", "Fed", "ECB", "recession",
+        "IPO", "Nasdaq", "S&P", "DAX", "bonds"
+      ],
+      "focus": "Stock markets, company earnings, macroeconomics, central banks (Fed/ECB), and investing trends."
+    },
+    {
+      "id": "space",
+      "name": "Space & Astronomy",
+      "keywords": [
+        "space", "NASA", "ESA", "rocket", "launch", "satellite", "orbit", "astronaut",
+        "Mars", "Moon", "lunar", "astronomy", "telescope", "James Webb", "galaxy",
+        "asteroid", "planet", "cosmic", "spacecraft"
+      ],
+      "focus": "Rocket launches and spaceflight, NASA/ESA missions, astronomy discoveries, telescopes, and planetary science."
+    },
+    {
+      "id": "health",
+      "name": "Health & Medicine",
+      "keywords": [
+        "health", "medicine", "medical", "disease", "cancer", "vaccine", "virus",
+        "clinical trial", "drug", "pharma", "biotech", "FDA", "treatment", "therapy",
+        "patients", "doctors", "mental health"
+      ],
+      "focus": "Medical research, clinical trials, drugs and biotech, public health, and notable healthcare developments."
+    },
+    {
+      "id": "geopolitics-defense",
+      "name": "Geopolitics & Defense",
+      "keywords": [
+        "war", "conflict", "military", "defense", "defence", "NATO", "Ukraine", "Russia",
+        "China", "Israel", "Gaza", "Iran", "Taiwan", "sanctions", "diplomacy", "troops",
+        "missile", "weapons", "army", "security"
+      ],
+      "focus": "Armed conflicts, military and defense developments, NATO, international diplomacy, sanctions, and geopolitical tensions."
+    },
+    {
+      "id": "energy",
+      "name": "Energy",
+      "keywords": [
+        "energy", "renewable", "solar", "wind power", "nuclear", "fission", "fusion",
+        "reactor", "tokamak", "SMR", "grid", "battery", "hydrogen", "geothermal",
+        "power plant", "electricity", "energy storage", "turbine"
+      ],
+      "focus": "Energy technology and deployment: renewables (solar, wind), nuclear fission, and emerging energy tech such as fusion, plus grid and storage. Focus on the technology and industry, NOT climate policy or emissions debates."
+    },
+    {
+      "id": "gaming-ai-boardgames",
+      "name": "Gaming: AI & Board Games",
+      "keywords": [
+        "board game", "boardgame", "tabletop", "dice", "card game",
+        "AI NPC", "NPC", "game AI", "generative game", "procedural generation",
+        "AI companion", "AI character", "AI in games"
+      ],
+      "focus": "Two things only: (1) video games that use AI in core gameplay — AI-driven NPCs, AI characters/companions, generative or procedural systems as game mechanics; and (2) board games and tabletop gaming. Ignore routine game releases, reviews, and industry/business news that don't involve AI mechanics or tabletop."
+    }
+  ]
 }

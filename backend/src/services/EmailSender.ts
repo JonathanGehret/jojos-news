@@ -21,10 +21,11 @@ export class EmailSender {
 
   async sendDailySummary(
     summaries: { topicName: string; content: string }[],
-    date: Date
+    date: Date,
+    quiet: string[] = []
   ): Promise<boolean> {
     try {
-      const html = this.buildEmailHTML(summaries, date);
+      const html = this.buildEmailHTML(summaries, date, quiet);
       const subject = this.buildEmailSubject(date);
 
       if (this.dryRun) {
@@ -78,7 +79,8 @@ export class EmailSender {
 
   private buildEmailHTML(
     summaries: { topicName: string; content: string }[],
-    date: Date
+    date: Date,
+    quiet: string[] = []
   ): string {
     const dateStr = date.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -86,6 +88,31 @@ export class EmailSender {
       month: 'long',
       day: 'numeric',
     });
+
+    // Table of contents — with a full daily palette there are many sections.
+    const tocHtml =
+      summaries.length > 1
+        ? `
+      <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px 20px; margin-bottom: 28px;">
+        <p style="margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280;">In this digest</p>
+        <ul style="margin: 0; padding-left: 18px; color: #374151; font-size: 14px; line-height: 1.8;">
+          ${summaries
+            .map((s) => `<li>${this.escapeHtml(s.topicName)}</li>`)
+            .join('')}
+        </ul>
+      </div>
+    `
+        : '';
+
+    // Categories that were checked but had nothing worth reporting today.
+    const quietHtml =
+      quiet.length > 0
+        ? `
+      <p style="margin-top: 24px; font-size: 12px; color: #9ca3af;">
+        Quiet today (no notable news): ${this.escapeHtml(quiet.join(', '))}
+      </p>
+    `
+        : '';
 
     const summaryHtml = summaries.length === 0
       ? `
@@ -132,7 +159,11 @@ export class EmailSender {
                 Here's your daily curated news summary, automatically generated from multiple sources.
               </p>
 
+              ${tocHtml}
+
               ${summaryHtml}
+
+              ${quietHtml}
 
               <!-- Footer -->
               <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px; font-size: 12px; color: #9ca3af;">

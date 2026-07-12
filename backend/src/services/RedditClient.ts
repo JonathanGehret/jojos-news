@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { NewsItem } from '../types';
+import { matchesKeyword } from './RSSParser';
 // @ts-ignore - uuid v9 type issue
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
@@ -155,7 +156,7 @@ export class RedditClient {
 
             // Match keywords
             const matchedTags = keywords.filter((kw) =>
-              (title + content).toLowerCase().includes(kw.toLowerCase())
+              matchesKeyword(`${title} ${content}`, kw)
             );
 
             newsItems.push({
