@@ -10,10 +10,10 @@ An AI-powered daily news ticker that aggregates from multiple sources (Twitter/X
 - ✉️ Daily email delivery at 6 AM Berlin time via Resend
 - 📊 Web dashboard to view summaries and email logs
 - ⚙️ Admin panel for customizing topic focus and preferences
-- 📅 **Full palette every day** — one summary per category, daily (11 categories):
-  AI & Technology · Elon Musk & US Politics · Science, Nature & Physics ·
-  German & EU Politics · World News · Investing & Markets · Space & Astronomy ·
-  Health & Medicine · Geopolitics & Defense · Energy · Gaming: AI & Board Games
+- 📅 **Full palette every day** — one summary per category, daily (10 categories):
+  AI & Technology (incl. AI in games) · Elon Musk & US Politics ·
+  Science, Nature & Physics · German & EU Politics · World News · Investing & Markets ·
+  Space & Astronomy · Health & Medicine · Geopolitics & Defense · Energy
   - Categories are defined in [backend/src/config/topics.json](backend/src/config/topics.json)
   - Categories with no notable news are skipped and listed as "quiet" in the email footer
 

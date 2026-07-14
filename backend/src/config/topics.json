@@ -7,9 +7,11 @@
         "AI", "artificial intelligence", "machine learning", "LLM", "large language model",
         "AI agent", "agentic", "OpenAI", "Anthropic", "Claude", "Claude Code", "Codex",
         "ChatGPT", "GPT", "Gemini", "Copilot", "vibe coding", "Nvidia", "GPU", "inference",
-        "neural network", "transformer", "generative AI", "chatbot"
+        "neural network", "transformer", "generative AI", "chatbot",
+        "AI NPC", "NPC", "game AI", "AI companion", "AI character", "AI in games",
+        "generative game", "procedural generation"
       ],
-      "focus": "AI research and products, AI agents and agentic tooling, coding assistants (Claude Code, Codex, Copilot, vibe coding), the major labs (OpenAI, Anthropic, Google DeepMind), and AI hardware such as Nvidia GPUs. Include notable general tech developments."
+      "focus": "AI research and products, AI agents and agentic tooling, coding assistants (Claude Code, Codex, Copilot, vibe coding), the major labs (OpenAI, Anthropic, Google DeepMind), and AI hardware such as Nvidia GPUs. ALSO include AI used inside video games — AI-driven NPCs, AI characters and companions, and generative or procedural systems used as core game mechanics. Do NOT include ordinary gaming news (game releases, reviews, hardware, industry business) that has no AI angle. Include notable general tech developments."
     },
     {
       "id": "musk-us-politics",
@@ -96,16 +98,6 @@
         "power plant", "electricity", "energy storage", "turbine"
       ],
       "focus": "Energy technology and deployment: renewables (solar, wind), nuclear fission, and emerging energy tech such as fusion, plus grid and storage. Focus on the technology and industry, NOT climate policy or emissions debates."
-    },
-    {
-      "id": "gaming-ai-boardgames",
-      "name": "Gaming: AI & Board Games",
-      "keywords": [
-        "board game", "boardgame", "tabletop", "dice", "card game",
-        "AI NPC", "NPC", "game AI", "generative game", "procedural generation",
-        "AI companion", "AI character", "AI in games"
-      ],
-      "focus": "Two things only: (1) video games that use AI in core gameplay — AI-driven NPCs, AI characters/companions, generative or procedural systems as game mechanics; and (2) board games and tabletop gaming. Ignore routine game releases, reviews, and industry/business news that don't involve AI mechanics or tabletop."
     }
   ]
 }

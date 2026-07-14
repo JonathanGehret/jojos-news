@@ -567,7 +567,9 @@ cd frontend && npm run dev
 - Batches items (~50 per batch) to stay within Ollama token limits
 - Ollama runs locally (no API latency)
 - Mistral model ~15-30s per batch
-- Generates one summary per category per day (~11 categories, one Gemini call each)
+- Generates one summary per category per day (10 categories, one Gemini call each)
+- Thinking is disabled (`thinkingBudget: 0`); its tokens are billed against
+  `maxOutputTokens` and were truncating summaries mid-sentence
 
 ### Email Delivery
 - Single email per day to one recipient

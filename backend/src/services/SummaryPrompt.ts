@@ -22,25 +22,38 @@ export function buildSummaryPrompt(
   categoryName: string,
   focus: string
 ): string {
-  return `You are a professional news summarizer. Your task is to create a neutral, unbiased summary of the news items below for a single category of a daily digest.
+  return `You are a professional news summarizer writing one section of a daily email digest.
 
 Category: ${categoryName}
-What this category is about: ${focus}
+What belongs in this category: ${focus}
 
-IMPORTANT GUIDELINES:
-- Maintain absolute neutrality and objectivity
-- Avoid opinions, speculation, or editorial commentary
-- Focus on factual information only
-- Use clear, concise language
-- Lead with the most important developments
-- The news items were keyword-matched, so some may not truly belong to this category.
-  Ignore anything that does not fit "${categoryName}" as described above.
-- If none of the items are genuinely relevant to this category, reply with exactly:
-  NO_RELEVANT_NEWS
-- Maximum length: ${SUMMARY_WORD_LIMIT} words
+The news items below were selected by keyword matching, so some do NOT belong in this
+category. Silently ignore those.
 
-NEWS ITEMS TO SUMMARIZE:
-${newsContent}
+OUTPUT FORMAT — follow exactly:
+- Write 2 to 4 groups.
+- Each group is a bold heading line on its own, written as **Group Name**
+- Under each heading, 1 to 3 bullet points, each starting with "- "
+- Each bullet is one or two complete, self-contained sentences.
+- Use ONLY this markdown: **bold** for the group headings, and "- " for bullets.
 
-Please provide a professional, well-organized summary:`;
+STRICTLY FORBIDDEN — the output goes straight into an email, so it must contain nothing
+but the summary itself:
+- No preamble, introduction, or title (do not restate the category name).
+- No commentary about your process, and no mention of which items you excluded,
+  filtered, kept, or judged relevant/irrelevant.
+- No closing or concluding remarks.
+- No "#" headings, no numbered lists, no tables.
+
+CONTENT RULES:
+- Neutral and objective; factual only; no opinions or speculation.
+- Lead with the most important developments.
+- Maximum ${SUMMARY_WORD_LIMIT} words total.
+
+If NONE of the items genuinely belong to this category, your entire response must be
+exactly this token and nothing else:
+NO_RELEVANT_NEWS
+
+NEWS ITEMS:
+${newsContent}`;
 }

@@ -129,9 +129,11 @@ export class EmailSender {
       .map(
         (summary) => `
       <section style="margin-bottom: 30px; border-left: 4px solid #3b82f6; padding-left: 20px;">
-        <h2 style="color: #1f2937; margin-top: 0; font-size: 20px;">${summary.topicName}</h2>
-        <div style="color: #4b5563; line-height: 1.6; font-size: 14px;">
-          ${this.escapeHtml(summary.content).replace(/\n/g, '<br />')}
+        <h2 style="color: #1f2937; margin: 0 0 8px 0; font-size: 20px;">${this.escapeHtml(
+          summary.topicName
+        )}</h2>
+        <div>
+          ${this.renderSummaryHtml(summary.content)}
         </div>
       </section>
     `
@@ -181,6 +183,65 @@ export class EmailSender {
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     return `Jojo's News Digest - ${dayName}, ${dateStr}`;
+  }
+
+  /**
+   * Renders the constrained markdown subset the summarizer emits (**bold** group
+   * headings + "- " bullets) into email-safe HTML. Previously the raw markdown was
+   * escaped and newline-replaced, so readers saw literal "**" and "*" characters.
+   */
+  private renderSummaryHtml(markdown: string): string {
+    const inline = (text: string): string =>
+      this.escapeHtml(text)
+        // Bold first, so a lone leftover asterisk can be stripped afterwards.
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*/g, '');
+
+    const blocks: string[] = [];
+    let bullets: string[] = [];
+
+    const flushBullets = (): void => {
+      if (bullets.length === 0) return;
+      blocks.push(
+        `<ul style="margin: 6px 0 14px 0; padding-left: 20px; color: #4b5563; line-height: 1.6; font-size: 14px;">${bullets.join(
+          ''
+        )}</ul>`
+      );
+      bullets = [];
+    };
+
+    for (const rawLine of markdown.split('\n')) {
+      // Tolerate stray markdown headings the model isn't supposed to emit.
+      const line = rawLine.trim().replace(/^#{1,6}\s*/, '');
+      if (line === '') {
+        flushBullets();
+        continue;
+      }
+
+      const bullet = line.match(/^[-*•]\s+(.*)$/);
+      if (bullet) {
+        bullets.push(
+          `<li style="margin-bottom: 6px;">${inline(bullet[1])}</li>`
+        );
+        continue;
+      }
+
+      // Non-bullet line: a group heading (or a stray paragraph).
+      flushBullets();
+      const isHeading = /^\*\*.+\*\*:?$/.test(line);
+      blocks.push(
+        isHeading
+          ? `<p style="margin: 14px 0 4px 0; color: #1f2937; font-size: 14px; font-weight: 600;">${inline(
+              line.replace(/:$/, '')
+            )}</p>`
+          : `<p style="margin: 0 0 10px 0; color: #4b5563; line-height: 1.6; font-size: 14px;">${inline(
+              line
+            )}</p>`
+      );
+    }
+
+    flushBullets();
+    return blocks.join('');
   }
 
   private escapeHtml(text: string): string {

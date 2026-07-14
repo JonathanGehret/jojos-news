@@ -56,7 +56,7 @@ export class SummarizationService {
 
         console.log(`  Summarizing ${category.name} (${newsItems.length} items)...`);
 
-        const content = await summarizer.generateSummary(
+        const raw = await summarizer.generateSummary(
           this.formatNewsForSummary(newsItems),
           category.name,
           category.focus
@@ -64,8 +64,17 @@ export class SummarizationService {
 
         // The prompt asks the model to emit this when nothing genuinely fits the
         // category (keyword matching is fuzzy, especially for niche categories).
-        if (content.trim().toUpperCase().startsWith('NO_RELEVANT_NEWS')) {
+        if (raw.trim().toUpperCase().startsWith('NO_RELEVANT_NEWS')) {
           console.warn(`  ⚠️  ${category.name}: no relevant news — skipping`);
+          quiet.push(category.name);
+          continue;
+        }
+
+        const content = this.sanitizeSummary(raw);
+
+        // If sanitizing left nothing usable, don't email a broken section.
+        if (content.length < 40) {
+          console.warn(`  ⚠️  ${category.name}: unusable summary — skipping`);
           quiet.push(category.name);
           continue;
         }
@@ -98,6 +107,32 @@ export class SummarizationService {
     }
 
     return { summaries, quiet };
+  }
+
+  /**
+   * Belt-and-braces cleanup. The prompt forbids meta-commentary, but if the model
+   * slips and narrates its filtering ("-> Relevant", "3. **Select and Synthesize**",
+   * "...were excluded from this summary"), strip it rather than emailing scaffolding.
+   */
+  private sanitizeSummary(text: string): string {
+    const scaffolding = [
+      /->\s*\**\s*(ir)?relevant/i,
+      /\((keep|skip)\)/i,
+      /^\s*\d+\.\s+\*\*/, // numbered analysis steps
+      /select and (synthesize|group)/i,
+      /\b(were |was )?(excluded|omitted|filtered out|not included)\b.*\bsummary\b/i,
+      /^\s*(analysis|step \d|filtering|reasoning)\b/i,
+    ];
+
+    const cleaned = text
+      .split('\n')
+      .filter((line) => !scaffolding.some((re) => re.test(line)))
+      .join('\n')
+      // Collapse the blank lines any removals left behind.
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+    return cleaned;
   }
 
   private async fetchNewsForKeywords(

@@ -6,7 +6,7 @@ dotenv.config();
 
 interface GeminiResponse {
   candidates?: {
-    content?: { parts?: { text?: string }[] };
+    content?: { parts?: { text?: string; thought?: boolean }[] };
     finishReason?: string;
   }[];
   promptFeedback?: { blockReason?: string };
@@ -51,14 +51,29 @@ export class GeminiClient implements Summarizer {
         `/models/${this.model}:generateContent`,
         {
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 1024 },
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 2048,
+            // This model reasons by default and those "thinking" tokens are billed
+            // against maxOutputTokens — they consumed ~600 of 1024, truncating the
+            // summary mid-sentence. Disable thinking; we want the answer, not the work.
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         },
         { headers: { 'x-goog-api-key': this.apiKey } }
       );
 
       const candidate = response.data.candidates?.[0];
+
+      // Never emit a half-finished summary — fail loudly instead of emailing a
+      // sentence that stops mid-word.
+      if (candidate?.finishReason === 'MAX_TOKENS') {
+        throw new Error('Gemini response hit MAX_TOKENS (summary would be truncated)');
+      }
+
       const text = candidate?.content?.parts
-        ?.map((part) => part.text || '')
+        ?.filter((part) => !part.thought) // defensive: never include reasoning parts
+        .map((part) => part.text || '')
         .join('')
         .trim();
 

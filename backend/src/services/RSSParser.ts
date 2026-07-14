@@ -93,13 +93,13 @@ export class RSSParser {
       { name: 'New Atlas Energy', url: 'https://newatlas.com/energy/index.rss', category: 'energy' },
       { name: 'Utility Dive', url: 'https://www.utilitydive.com/feeds/news/', category: 'energy' },
 
-      // Gaming feeds (filtered by keywords to AI-in-games and board games)
+      // Gaming feeds — kept only to surface AI-in-games stories (AI NPCs, generative
+      // mechanics), which are summarized under AI & Technology. Ordinary game news is
+      // filtered out by keywords; board-game feeds were removed with that category.
       { name: 'Eurogamer', url: 'https://www.eurogamer.net/feed', category: 'gaming' },
       { name: 'Rock Paper Shotgun', url: 'https://www.rockpapershotgun.com/feed', category: 'gaming' },
       { name: 'PC Gamer', url: 'https://www.pcgamer.com/rss/', category: 'gaming' },
       { name: 'The Verge Games', url: 'https://www.theverge.com/rss/games/index.xml', category: 'gaming' },
-      { name: 'Dicebreaker', url: 'https://www.dicebreaker.com/feed', category: 'gaming' },
-      { name: 'Shut Up & Sit Down', url: 'https://www.shutupandsitdown.com/feed/', category: 'gaming' },
 
       // Business/Investing feeds
       { name: 'MarketWatch', url: 'https://feeds.marketwatch.com/marketwatch/topstories/', category: 'investing' },
