@@ -35,6 +35,53 @@ export class GeminiClient implements Summarizer {
     });
   }
 
+  /**
+   * POSTs the prompt, retrying only on transient failures (429 rate limit, 5xx
+   * overload). Client errors and successful-but-bad responses are not retried.
+   */
+  private async postWithRetry(
+    prompt: string,
+    attempts: number = 3
+  ): Promise<{ data: GeminiResponse }> {
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        return await this.client.post<GeminiResponse>(
+          `/models/${this.model}:generateContent`,
+          {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.4,
+              maxOutputTokens: 2048,
+              // This model reasons by default and those "thinking" tokens are billed
+              // against maxOutputTokens — they consumed ~600 of 1024, truncating the
+              // summary mid-sentence. Disable thinking; we want the answer, not the work.
+              thinkingConfig: { thinkingBudget: 0 },
+            },
+          },
+          { headers: { 'x-goog-api-key': this.apiKey } }
+        );
+      } catch (error) {
+        lastError = error;
+        const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+        const transient = status === 429 || (status !== undefined && status >= 500);
+
+        if (!transient || attempt === attempts) {
+          throw error;
+        }
+
+        const backoffMs = 2000 * attempt;
+        console.warn(
+          `  Gemini ${status} (attempt ${attempt}/${attempts}) — retrying in ${backoffMs}ms`
+        );
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+      }
+    }
+
+    throw lastError;
+  }
+
   async generateSummary(
     newsContent: string,
     categoryName: string,
@@ -47,21 +94,10 @@ export class GeminiClient implements Summarizer {
     const prompt = buildSummaryPrompt(newsContent, categoryName, focus);
 
     try {
-      const response = await this.client.post<GeminiResponse>(
-        `/models/${this.model}:generateContent`,
-        {
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 2048,
-            // This model reasons by default and those "thinking" tokens are billed
-            // against maxOutputTokens — they consumed ~600 of 1024, truncating the
-            // summary mid-sentence. Disable thinking; we want the answer, not the work.
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-        },
-        { headers: { 'x-goog-api-key': this.apiKey } }
-      );
+      // Gemini returns transient 503/429s under load. Without a retry a single blip
+      // drops the whole category for the day, which previously let a stale summary
+      // from an earlier run survive into the email.
+      const response = await this.postWithRetry(prompt);
 
       const candidate = response.data.candidates?.[0];
 

@@ -39,6 +39,11 @@ export class SummarizationService {
     const summaries: Summary[] = [];
     const quiet: string[] = [];
 
+    // Start from a clean slate for today. Rows are keyed by (date, topic_name), so
+    // without this a category that is skipped this run — or removed from the config
+    // entirely — would leave an earlier run's row behind for the email to pick up.
+    await this.deleteSummariesForDate(new Date());
+
     console.log(`\n📝 Generating summaries for ${categories.length} categories...`);
 
     for (const category of categories) {
@@ -200,6 +205,23 @@ ${item.url}
     return formatted;
   }
 
+  /** Clears a day's summaries so a re-run fully replaces them (no stale leftovers). */
+  private async deleteSummariesForDate(date: Date): Promise<void> {
+    const dateStr = date.toISOString().split('T')[0];
+
+    try {
+      const removed = await db.execute('DELETE FROM summaries WHERE date = $1', [
+        dateStr,
+      ]);
+      if (removed > 0) {
+        console.log(`  Cleared ${removed} existing summary(ies) for ${dateStr}`);
+      }
+    } catch (error) {
+      console.error('Error clearing existing summaries:', error);
+      throw error;
+    }
+  }
+
   private async storeSummary(summary: Summary): Promise<void> {
     const query = `
       INSERT INTO summaries (id, date, day_of_week, topic_name, content, model)
@@ -236,15 +258,21 @@ ${item.url}
     try {
       const summaries = await db.query<any>(query, [dateStr]);
 
-      return summaries.map((row) => ({
-        id: row.id,
-        date: new Date(row.date),
-        dayOfWeek: row.day_of_week,
-        topicName: row.topic_name,
-        content: row.content,
-        model: row.model,
-        generatedAt: new Date(row.generated_at),
-      }));
+      // Only surface categories that still exist in the config, so a row for a
+      // removed category can never reappear in the email.
+      const configured = new Set(this.getCategories().map((c) => c.name));
+
+      return summaries
+        .filter((row) => configured.has(row.topic_name))
+        .map((row) => ({
+          id: row.id,
+          date: new Date(row.date),
+          dayOfWeek: row.day_of_week,
+          topicName: row.topic_name,
+          content: row.content,
+          model: row.model,
+          generatedAt: new Date(row.generated_at),
+        }));
     } catch (error) {
       console.error('Error fetching summaries:', error);
       return [];
