@@ -21,6 +21,13 @@ export class GeminiClient implements Summarizer {
   private client: AxiosInstance;
   private apiKey: string;
   private model: string;
+  /**
+   * Whether the model accepts our thinkingConfig. The `-latest` alias rolls forward
+   * across model generations that disagree about this field (Gemini 2.5 wanted
+   * `thinkingBudget`, Gemini 3 rejects it and uses `thinkingLevel`), so on a 400 we
+   * drop the field and remember that for the rest of the run.
+   */
+  private useThinkingConfig = true;
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || '';
@@ -35,9 +42,26 @@ export class GeminiClient implements Summarizer {
     });
   }
 
+  private buildRequestBody(prompt: string): Record<string, unknown> {
+    const generationConfig: Record<string, unknown> = {
+      temperature: 0.4,
+      maxOutputTokens: 2048,
+    };
+
+    if (this.useThinkingConfig) {
+      // Keep reasoning minimal: thinking tokens are billed against maxOutputTokens
+      // and used to truncate the summary mid-sentence. 'low' is the floor on
+      // Gemini 3 (which cannot disable thinking entirely).
+      generationConfig.thinkingConfig = { thinkingLevel: 'low' };
+    }
+
+    return { contents: [{ parts: [{ text: prompt }] }], generationConfig };
+  }
+
   /**
-   * POSTs the prompt, retrying only on transient failures (429 rate limit, 5xx
-   * overload). Client errors and successful-but-bad responses are not retried.
+   * POSTs the prompt, retrying transient failures (429 rate limit, 5xx overload).
+   * A 400 is treated as "this model dislikes our thinkingConfig": we drop the field
+   * and retry once, rather than failing every category for the whole run.
    */
   private async postWithRetry(
     prompt: string,
@@ -49,24 +73,24 @@ export class GeminiClient implements Summarizer {
       try {
         return await this.client.post<GeminiResponse>(
           `/models/${this.model}:generateContent`,
-          {
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.4,
-              maxOutputTokens: 2048,
-              // This model reasons by default and those "thinking" tokens are billed
-              // against maxOutputTokens — they consumed ~600 of 1024, truncating the
-              // summary mid-sentence. Disable thinking; we want the answer, not the work.
-              thinkingConfig: { thinkingBudget: 0 },
-            },
-          },
+          this.buildRequestBody(prompt),
           { headers: { 'x-goog-api-key': this.apiKey } }
         );
       } catch (error) {
         lastError = error;
         const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-        const transient = status === 429 || (status !== undefined && status >= 500);
 
+        // Model rejected a generationConfig field — retry without thinkingConfig and
+        // remember, so a future alias roll-forward degrades instead of killing the digest.
+        if (status === 400 && this.useThinkingConfig) {
+          console.warn(
+            '  Gemini 400 with thinkingConfig — retrying without it for the rest of this run'
+          );
+          this.useThinkingConfig = false;
+          continue;
+        }
+
+        const transient = status === 429 || (status !== undefined && status >= 500);
         if (!transient || attempt === attempts) {
           throw error;
         }

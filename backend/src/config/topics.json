@@ -9,45 +9,37 @@
         "ChatGPT", "GPT", "Gemini", "Copilot", "vibe coding", "Nvidia", "GPU", "inference",
         "neural network", "transformer", "generative AI", "chatbot",
         "AI NPC", "NPC", "game AI", "AI companion", "AI character", "AI in games",
-        "generative game", "procedural generation"
+        "generative game", "procedural generation",
+        "Musk", "Elon", "Tesla", "xAI", "Grok", "Neuralink"
       ],
-      "focus": "AI research and products, AI agents and agentic tooling, coding assistants (Claude Code, Codex, Copilot, vibe coding), the major labs (OpenAI, Anthropic, Google DeepMind), and AI hardware such as Nvidia GPUs. ALSO include AI used inside video games — AI-driven NPCs, AI characters and companions, and generative or procedural systems used as core game mechanics. Do NOT include ordinary gaming news (game releases, reviews, hardware, industry business) that has no AI angle. Include notable general tech developments."
-    },
-    {
-      "id": "musk-us-politics",
-      "name": "Elon Musk & US Politics",
-      "keywords": [
-        "Musk", "Elon", "Tesla", "SpaceX", "xAI", "Grok", "Neuralink", "Starlink",
-        "Trump", "White House", "Congress", "Senate", "US politics", "Washington", "Republican", "Democrat"
-      ],
-      "focus": "Elon Musk's ventures and statements, and US political developments including the Trump administration, Congress, and major policy moves."
+      "focus": "AI research and products, AI agents and agentic tooling, coding assistants (Claude Code, Codex, Copilot, vibe coding), the major labs (OpenAI, Anthropic, Google DeepMind), and AI hardware such as Nvidia GPUs. ALSO include Elon Musk's technology ventures (Tesla, xAI/Grok, Neuralink) — but his rocket and satellite news belongs to Space & Astronomy, not here. ALSO include AI used inside video games: AI-driven NPCs, AI characters and companions, and generative or procedural systems used as core game mechanics. Do NOT include ordinary gaming news (game releases, reviews, hardware, industry business) that has no AI angle. Include notable general technology developments."
     },
     {
       "id": "science",
-      "name": "Science, Nature & Physics",
+      "name": "Science & Research",
       "keywords": [
         "physics", "quantum", "nature", "science", "research", "study", "discovery",
-        "biology", "chemistry", "scientists", "experiment", "particle", "evolution"
+        "biology", "chemistry", "scientists", "experiment", "particle", "evolution",
+        "medical research", "clinical trial", "cancer", "gene", "genetic", "neuroscience",
+        "biotech", "drug", "treatment", "therapy", "vaccine", "trial results"
       ],
-      "focus": "Fundamental science: physics, quantum research, biology, chemistry, and notable discoveries from the natural world. Exclude space and health, which have their own categories."
+      "focus": "Scientific research and discoveries: physics, quantum, biology, chemistry, and the natural world. ALSO include biomedical and medical RESEARCH — new studies, clinical trial results, drug and treatment breakthroughs, and discoveries about disease mechanisms. STRICTLY EXCLUDE the non-research side of health: disease outbreaks and public-health bulletins, healthcare policy, insurance, hospitals, regulatory approvals, and pharmaceutical industry business news. Exclude space and astronomy, which have their own category."
     },
     {
-      "id": "german-eu-politics",
-      "name": "German & EU Politics",
-      "keywords": [
-        "Germany", "German", "Berlin", "Bundestag", "Scholz", "Merz", "AfD", "Sonneborn",
-        "EU", "European Union", "Europe", "Brussels", "European Commission", "Bundesbank"
-      ],
-      "focus": "German domestic politics, EU institutions and policy, Brussels decision-making, and Martin Sonneborn's statements."
-    },
-    {
-      "id": "world-news",
-      "name": "World News",
+      "id": "world-geopolitics",
+      "name": "World News & Geopolitics",
       "keywords": [
         "world", "international", "global", "election", "government", "protest",
-        "president", "prime minister", "summit", "crisis"
+        "president", "prime minister", "summit", "crisis",
+        "Trump", "White House", "Congress", "Senate", "US politics", "Washington",
+        "Republican", "Democrat",
+        "war", "conflict", "military", "defense", "defence", "NATO", "Ukraine", "Russia",
+        "China", "Israel", "Gaza", "Iran", "Taiwan", "sanctions", "diplomacy", "troops",
+        "missile", "weapons", "army",
+        "Germany", "German", "Berlin", "Bundestag", "Merz", "AfD", "Sonneborn",
+        "EU", "European Union", "Europe", "Brussels", "European Commission"
       ],
-      "focus": "Significant general world news and major international events that don't fall neatly into the other categories."
+      "focus": "Global affairs in one place: major world news and international events; armed conflicts, military and defense developments, NATO, diplomacy and sanctions; US politics including the Trump administration and Congress; and German and EU politics (Bundestag, AfD, Sonneborn, Brussels and European Commission decisions). Prioritise the most consequential developments — do not pad with minor items."
     },
     {
       "id": "investing",
@@ -65,29 +57,9 @@
       "keywords": [
         "space", "NASA", "ESA", "rocket", "launch", "satellite", "orbit", "astronaut",
         "Mars", "Moon", "lunar", "astronomy", "telescope", "James Webb", "galaxy",
-        "asteroid", "planet", "cosmic", "spacecraft"
+        "asteroid", "planet", "cosmic", "spacecraft", "SpaceX", "Starlink", "Starship"
       ],
-      "focus": "Rocket launches and spaceflight, NASA/ESA missions, astronomy discoveries, telescopes, and planetary science."
-    },
-    {
-      "id": "health",
-      "name": "Health & Medicine",
-      "keywords": [
-        "health", "medicine", "medical", "disease", "cancer", "vaccine", "virus",
-        "clinical trial", "drug", "pharma", "biotech", "FDA", "treatment", "therapy",
-        "patients", "doctors", "mental health"
-      ],
-      "focus": "Medical research, clinical trials, drugs and biotech, public health, and notable healthcare developments."
-    },
-    {
-      "id": "geopolitics-defense",
-      "name": "Geopolitics & Defense",
-      "keywords": [
-        "war", "conflict", "military", "defense", "defence", "NATO", "Ukraine", "Russia",
-        "China", "Israel", "Gaza", "Iran", "Taiwan", "sanctions", "diplomacy", "troops",
-        "missile", "weapons", "army", "security"
-      ],
-      "focus": "Armed conflicts, military and defense developments, NATO, international diplomacy, sanctions, and geopolitical tensions."
+      "focus": "Rocket launches and spaceflight (including SpaceX, Starship and Starlink), NASA/ESA missions, astronomy discoveries, telescopes, and planetary science."
     },
     {
       "id": "energy",

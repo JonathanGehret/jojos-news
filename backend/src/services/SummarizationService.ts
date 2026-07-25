@@ -1,6 +1,7 @@
 import summarizer from './Summarizer';
 import db from '../database/connection';
 import { NewsItem, Summary } from '../types';
+import { matchesKeyword } from './RSSParser';
 import topicsConfig from '../config/topics.json';
 // @ts-ignore - uuid v9 type issue
 import { v4 as uuidv4 } from 'uuid';
@@ -39,6 +40,8 @@ export class SummarizationService {
     const summaries: Summary[] = [];
     const quiet: string[] = [];
 
+    await this.ensureSchemaExtras();
+
     // Start from a clean slate for today. Rows are keyed by (date, topic_name), so
     // without this a category that is skipped this run — or removed from the config
     // entirely — would leave an earlier run's row behind for the email to pick up.
@@ -46,12 +49,14 @@ export class SummarizationService {
 
     console.log(`\n📝 Generating summaries for ${categories.length} categories...`);
 
+    // Assign every story to exactly one category up front. Previously each category
+    // queried independently, so an article matching several categories (e.g. a
+    // US-Iran strike) was summarized in each of them — the duplicate paragraphs.
+    const assignments = await this.assignNewsToCategories(categories);
+
     for (const category of categories) {
       try {
-        const newsItems = await this.fetchNewsForKeywords(
-          category.keywords,
-          this.maxItemsPerCategory
-        );
+        const newsItems = assignments.get(category.id) || [];
 
         if (newsItems.length === 0) {
           console.warn(`  ⚠️  ${category.name}: no matching news — skipping`);
@@ -96,6 +101,11 @@ export class SummarizationService {
 
         await this.storeSummary(summary);
         summaries.push(summary);
+
+        // Only mark items consumed once their summary is safely stored, so a failed
+        // category's stories remain available for tomorrow's digest.
+        await this.markItemsDigested(newsItems.map((item) => item.id));
+
         console.log(`  ✓ ${category.name} generated and stored`);
       } catch (error) {
         console.error(`  ✗ Error summarizing ${category.name}:`, error);
@@ -140,32 +150,86 @@ export class SummarizationService {
     return cleaned;
   }
 
-  private async fetchNewsForKeywords(
-    keywords: string[],
-    limit: number = 100
-  ): Promise<NewsItem[]> {
-    const placeholders = keywords.map((_, i) => `$${i + 1}`).join(',');
-    // Whole-word title match (\y = word boundary). A plain '%AI%' ILIKE would also
-    // match "said"/"Ukraine", and '%war%' would match "award", flooding categories.
-    const wordPatterns = keywords
-      .map((_, i) => `'\\y' || $${i + 1} || '\\y'`)
-      .join(',');
+  /**
+   * Adds columns the running schema may predate. Idempotent, and safer than
+   * re-running db:migrate, which DROPs every table.
+   */
+  private async ensureSchemaExtras(): Promise<void> {
+    try {
+      await db.execute(
+        'ALTER TABLE news_items ADD COLUMN IF NOT EXISTS digested_at TIMESTAMP'
+      );
+    } catch (error) {
+      console.error('Error ensuring schema extras:', error);
+      throw error;
+    }
+  }
 
+  /** Scores an item against a category: how many distinct keywords it matches. */
+  private scoreItem(item: NewsItem, category: TopicCategory): number {
+    const haystack = `${item.title || ''} ${item.description || ''}`;
+    const tags = new Set((item.topicTags || []).map((t) => t.toLowerCase()));
+
+    return category.keywords.filter(
+      (keyword) =>
+        tags.has(keyword.toLowerCase()) || matchesKeyword(haystack, keyword)
+    ).length;
+  }
+
+  /**
+   * Assigns each candidate story to the single category it matches best, so no
+   * story can be summarized under two headings in the same email. Ties go to the
+   * category listed first in topics.json.
+   */
+  private async assignNewsToCategories(
+    categories: TopicCategory[]
+  ): Promise<Map<string, NewsItem[]>> {
+    const assignments = new Map<string, NewsItem[]>();
+    categories.forEach((category) => assignments.set(category.id, []));
+
+    const candidates = await this.fetchUndigestedNews();
+    console.log(`  ${candidates.length} candidate stories to assign`);
+
+    for (const item of candidates) {
+      let bestCategory: TopicCategory | null = null;
+      let bestScore = 0;
+
+      for (const category of categories) {
+        const score = this.scoreItem(item, category);
+        // Strictly greater keeps the earlier (higher-priority) category on ties.
+        if (score > bestScore) {
+          bestScore = score;
+          bestCategory = category;
+        }
+      }
+
+      if (bestCategory) {
+        const bucket = assignments.get(bestCategory.id)!;
+        if (bucket.length < this.maxItemsPerCategory) {
+          bucket.push(item);
+        }
+      }
+    }
+
+    return assignments;
+  }
+
+  /** Recent stories that have not already been sent in a digest. */
+  private async fetchUndigestedNews(limit: number = 400): Promise<NewsItem[]> {
     const query = `
       SELECT
         id, title, description, url, source, source_url, author,
         published_at, fetched_at, topic_tags, content
       FROM news_items
       WHERE fetched_at >= NOW() - INTERVAL '24 hours'
-        AND (topic_tags && ARRAY[${placeholders}] OR title ~* ANY(ARRAY[${wordPatterns}]))
+        AND digested_at IS NULL
       ORDER BY published_at DESC
       LIMIT ${limit}
     `;
 
     try {
-      const news = await db.query<any>(query, keywords);
+      const news = await db.query<any>(query);
 
-      // Map database rows to NewsItem type
       return news.map((row) => ({
         id: row.id,
         title: row.title,
@@ -182,6 +246,21 @@ export class SummarizationService {
     } catch (error) {
       console.error('Error fetching news items:', error);
       return [];
+    }
+  }
+
+  /** Marks stories as used so they never appear in a future digest. */
+  private async markItemsDigested(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+
+    try {
+      await db.execute(
+        'UPDATE news_items SET digested_at = NOW() WHERE id = ANY($1::uuid[])',
+        [ids]
+      );
+    } catch (error) {
+      console.error('Error marking news items as digested:', error);
+      // Non-fatal: worst case a story could repeat, which beats losing the digest.
     }
   }
 

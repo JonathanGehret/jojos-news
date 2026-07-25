@@ -567,9 +567,16 @@ cd frontend && npm run dev
 - Batches items (~50 per batch) to stay within Ollama token limits
 - Ollama runs locally (no API latency)
 - Mistral model ~15-30s per batch
-- Generates one summary per category per day (10 categories, one Gemini call each)
-- Thinking is disabled (`thinkingBudget: 0`); its tokens are billed against
-  `maxOutputTokens` and were truncating summaries mid-sentence
+- Generates one summary per category per day (6 categories, one Gemini call each)
+- Thinking is kept minimal via `thinkingConfig: { thinkingLevel: 'low' }`. Thinking
+  tokens bill against `maxOutputTokens` and were truncating summaries mid-sentence.
+  Do **not** use `thinkingBudget: 0` — Gemini 3.x rejects it with a 400, which silently
+  killed every summary when the `gemini-flash-latest` alias rolled forward. The client
+  falls back to omitting `thinkingConfig` on any 400 so a future roll-forward degrades
+  instead of breaking the digest.
+- Each story is assigned to exactly **one** category (highest keyword-match score, ties
+  to the earlier category in `topics.json`), so nothing is summarized twice in an email.
+  Summarized stories get `news_items.digested_at` set so they can't return in a later one.
 
 ### Email Delivery
 - Single email per day to one recipient
