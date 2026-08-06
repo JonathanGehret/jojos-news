@@ -28,18 +28,49 @@ export class GeminiClient implements Summarizer {
    * drop the field and remember that for the rest of the run.
    */
   private useThinkingConfig = true;
+  /**
+   * Tried in order when the primary is rate-limited or overloaded. The flash-lite
+   * models have more free-tier headroom and stay responsive when `flash-latest`
+   * returns 503 "high demand", which is what silently emptied the digest.
+   */
+  private fallbackModels: string[];
+  private activeModel: string;
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || '';
     // 'gemini-flash-latest' is a self-updating alias that stays on the current
     // free-tier flash model, avoiding "model no longer available" breakage.
     this.model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+    this.activeModel = this.model;
+    this.fallbackModels = (
+      process.env.GEMINI_FALLBACK_MODELS ||
+      'gemini-flash-lite-latest,gemini-3.1-flash-lite'
+    )
+      .split(',')
+      .map((m) => m.trim())
+      .filter((m) => m && m !== this.model);
 
     this.client = axios.create({
       baseURL: 'https://generativelanguage.googleapis.com/v1beta',
       timeout: 60000,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  /** Seconds the API itself asks us to wait, if it says so (RetryInfo). */
+  private retryDelayMs(error: unknown): number | null {
+    if (!axios.isAxiosError(error)) return null;
+    const details = (error.response?.data as any)?.error?.details;
+    if (!Array.isArray(details)) return null;
+
+    for (const detail of details) {
+      const delay = detail?.retryDelay;
+      if (typeof delay === 'string') {
+        const seconds = parseFloat(delay.replace('s', ''));
+        if (!Number.isNaN(seconds)) return Math.ceil(seconds * 1000);
+      }
+    }
+    return null;
   }
 
   private buildRequestBody(prompt: string): Record<string, unknown> {
@@ -65,41 +96,63 @@ export class GeminiClient implements Summarizer {
    */
   private async postWithRetry(
     prompt: string,
-    attempts: number = 3
+    attempts: number = 4
   ): Promise<{ data: GeminiResponse }> {
+    // Try the primary model, then each fallback, before giving up on a category.
+    const models = [this.activeModel, ...this.fallbackModels.filter((m) => m !== this.activeModel)];
     let lastError: unknown;
 
-    for (let attempt = 1; attempt <= attempts; attempt++) {
-      try {
-        return await this.client.post<GeminiResponse>(
-          `/models/${this.model}:generateContent`,
-          this.buildRequestBody(prompt),
-          { headers: { 'x-goog-api-key': this.apiKey } }
-        );
-      } catch (error) {
-        lastError = error;
-        const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-
-        // Model rejected a generationConfig field — retry without thinkingConfig and
-        // remember, so a future alias roll-forward degrades instead of killing the digest.
-        if (status === 400 && this.useThinkingConfig) {
-          console.warn(
-            '  Gemini 400 with thinkingConfig — retrying without it for the rest of this run'
+    for (const model of models) {
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+          const response = await this.client.post<GeminiResponse>(
+            `/models/${model}:generateContent`,
+            this.buildRequestBody(prompt),
+            { headers: { 'x-goog-api-key': this.apiKey } }
           );
-          this.useThinkingConfig = false;
-          continue;
-        }
 
-        const transient = status === 429 || (status !== undefined && status >= 500);
-        if (!transient || attempt === attempts) {
-          throw error;
-        }
+          // Stick with whatever is working for the remaining categories.
+          if (model !== this.activeModel) {
+            console.warn(`  Switching to fallback model "${model}" for this run`);
+            this.activeModel = model;
+          }
+          return response;
+        } catch (error) {
+          lastError = error;
+          const status = axios.isAxiosError(error) ? error.response?.status : undefined;
 
-        const backoffMs = 2000 * attempt;
-        console.warn(
-          `  Gemini ${status} (attempt ${attempt}/${attempts}) — retrying in ${backoffMs}ms`
-        );
-        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+          // Model rejected a generationConfig field — retry without thinkingConfig and
+          // remember, so a future alias roll-forward degrades instead of killing the digest.
+          if (status === 400 && this.useThinkingConfig) {
+            console.warn(
+              '  Gemini 400 with thinkingConfig — retrying without it for the rest of this run'
+            );
+            this.useThinkingConfig = false;
+            continue;
+          }
+
+          const timedOut = axios.isAxiosError(error) && error.code === 'ECONNABORTED';
+          const transient =
+            timedOut || status === 429 || (status !== undefined && status >= 500);
+
+          if (!transient) throw error;
+
+          if (attempt === attempts) {
+            console.warn(`  Model "${model}" still failing (${status || 'timeout'})`);
+            break; // move on to the next model
+          }
+
+          // Exponential backoff with jitter, or the delay the API asked for.
+          // The old 2s/4s was far too short for 429 rate limits and 503 spikes.
+          const suggested = this.retryDelayMs(error);
+          const backoffMs =
+            suggested ?? Math.min(30000, 4000 * 2 ** (attempt - 1)) + Math.floor(Math.random() * 1000);
+
+          console.warn(
+            `  Gemini ${status || 'timeout'} on "${model}" (attempt ${attempt}/${attempts}) — retrying in ${backoffMs}ms`
+          );
+          await new Promise((resolve) => setTimeout(resolve, backoffMs));
+        }
       }
     }
 
@@ -176,7 +229,8 @@ export class GeminiClient implements Summarizer {
   }
 
   getModelName(): string {
-    return this.model;
+    // Reflects the fallback actually in use, so stored summaries record the truth.
+    return this.activeModel;
   }
 
   getProviderName(): string {

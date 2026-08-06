@@ -32,7 +32,11 @@ export class DailyEmailJob {
     );
   }
 
-  async execute(): Promise<void> {
+  async execute(
+    options: { allowAdHocSummarization?: boolean } = {}
+  ): Promise<void> {
+    const { allowAdHocSummarization = true } = options;
+
     try {
       console.log('Starting daily email generation and sending...');
 
@@ -43,7 +47,13 @@ export class DailyEmailJob {
       let summaries = await summarizationService.getSummaryForDate(today);
       let quiet: string[] = [];
 
-      if (summaries.length === 0) {
+      if (summaries.length === 0 && !allowAdHocSummarization) {
+        console.warn(
+          '⚠️  No summaries found and ad-hoc summarization is disabled ' +
+            '(summarization already ran in this job) — sending placeholder.'
+        );
+        quiet = summarizationService.getCategories().map((c) => c.name);
+      } else if (summaries.length === 0) {
         console.warn(
           `⚠️  No summaries found for ${dayOfWeek}. Running ad-hoc summarization...`
         );

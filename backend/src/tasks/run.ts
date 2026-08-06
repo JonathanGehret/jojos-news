@@ -27,7 +27,10 @@ async function run(task: string): Promise<void> {
     case 'digest':
       await new AggregationScheduler().execute();
       await new SummarizationScheduler().execute();
-      await new DailyEmailJob().execute();
+      // Summarization already ran above, so disable the email job's ad-hoc retry —
+      // otherwise a bad summarization run is repeated in full, doubling the API
+      // calls and making rate-limit failures considerably worse.
+      await new DailyEmailJob().execute({ allowAdHocSummarization: false });
       break;
     default:
       throw new Error(

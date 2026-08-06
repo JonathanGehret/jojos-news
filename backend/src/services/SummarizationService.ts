@@ -25,6 +25,8 @@ export interface CategoryRunResult {
 export class SummarizationService {
   /** Max news items fed to the LLM per category. Gemini handles this in one call. */
   private maxItemsPerCategory = 35;
+  /** Gap between category LLM calls, to stay under the free tier's per-minute limit. */
+  private callSpacingMs = 5000;
 
   getCategories(): TopicCategory[] {
     return (topicsConfig as { categories: TopicCategory[] }).categories;
@@ -53,6 +55,7 @@ export class SummarizationService {
     // queried independently, so an article matching several categories (e.g. a
     // US-Iran strike) was summarized in each of them — the duplicate paragraphs.
     const assignments = await this.assignNewsToCategories(categories);
+    let isFirstCall = true;
 
     for (const category of categories) {
       try {
@@ -63,6 +66,13 @@ export class SummarizationService {
           quiet.push(category.name);
           continue;
         }
+
+        // Space the calls out. Firing every category back-to-back is a burst that
+        // trips the free tier's per-minute limit, which returned 429s for all of them.
+        if (!isFirstCall) {
+          await new Promise((resolve) => setTimeout(resolve, this.callSpacingMs));
+        }
+        isFirstCall = false;
 
         console.log(`  Summarizing ${category.name} (${newsItems.length} items)...`);
 
