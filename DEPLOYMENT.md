@@ -96,6 +96,11 @@ To change the time, edit the single `cron` line (it's UTC). Manual
 
 - Scheduled Actions are often delayed 15–60+ min under load — fine for a digest,
   and the `:13` minute avoids the worst top-of-hour backlog.
+- **Keep the repo public, or watch your minutes.** Private repos on the Free plan share
+  one 2,000 min/month pool across *all* your private repos. A single frequently-scheduled
+  workflow elsewhere can exhaust it, and then every workflow — including this digest —
+  refuses to start with *"The job was not started because recent account payments have
+  failed or your spending limit needs to be increased."* Public repos are exempt.
 - GitHub **disables scheduled workflows after 60 days of no repo activity**. Any
   commit re-arms them.
 
@@ -108,7 +113,7 @@ To change the time, edit the single `cron` line (it's UTC). Manual
 
 | Component | Tier | Cost |
 |-----------|------|------|
-| GitHub Actions | Free (public repo unlimited; private ~2000 min/mo) | $0 |
+| GitHub Actions | Free — **unlimited on public repos**; private repos share ~2000 min/mo | $0 |
 | Neon Postgres | Free tier | $0 |
 | Google Gemini | Free API tier (`gemini-flash-latest`) | $0 |
 | Resend | Free tier (3,000 emails/mo) | $0 |

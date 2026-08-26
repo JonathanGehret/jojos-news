@@ -35,7 +35,15 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           LLM_PROVIDER: gemini
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: gemini-flash-latest
+          # flash-lite has more free-tier headroom; flash-latest has been
+          # returning 503/timeouts. GeminiClient falls through the rest on failure.
+          GEMINI_MODEL: gemini-flash-lite-latest
+          GEMINI_FALLBACK_MODELS: gemini-flash-latest,gemini-3.1-flash-lite
+          # Optional non-Google backup (Groq/OpenRouter/...). Inert unless set, so a
+          # Google outage or billing block can no longer empty the whole digest.
+          OPENAI_COMPAT_BASE_URL: ${{ vars.OPENAI_COMPAT_BASE_URL }}
+          OPENAI_COMPAT_API_KEY: ${{ secrets.OPENAI_COMPAT_API_KEY }}
+          OPENAI_COMPAT_MODEL: ${{ vars.OPENAI_COMPAT_MODEL }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}

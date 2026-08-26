@@ -38,13 +38,15 @@ export class GeminiClient implements Summarizer {
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || '';
-    // 'gemini-flash-latest' is a self-updating alias that stays on the current
-    // free-tier flash model, avoiding "model no longer available" breakage.
-    this.model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+    // 'gemini-flash-lite-latest' is the default primary: it has more free-tier
+    // headroom and stays responsive while 'gemini-flash-latest' has been returning
+    // 503 "high demand" and 30s timeouts. Both are self-updating aliases, which
+    // avoids "model no longer available" breakage but can change accepted params.
+    this.model = process.env.GEMINI_MODEL || 'gemini-flash-lite-latest';
     this.activeModel = this.model;
     this.fallbackModels = (
       process.env.GEMINI_FALLBACK_MODELS ||
-      'gemini-flash-lite-latest,gemini-3.1-flash-lite'
+      'gemini-flash-latest,gemini-3.1-flash-lite'
     )
       .split(',')
       .map((m) => m.trim())

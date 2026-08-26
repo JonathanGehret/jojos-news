@@ -573,4 +573,4 @@ No more manual work needed. The system runs completely automatically.
 
 **Email Setup Complete!** ✅
 
-Next: See [CURRENT_STATE.md](CURRENT_STATE.md) for project status or [CLAUDE.md](CLAUDE.md) for developer docs.
+Next: See [DEPLOYMENT.md](DEPLOYMENT.md) for the cloud runbook or [CLAUDE.md](CLAUDE.md) for developer docs.

@@ -2,6 +2,23 @@
 
 **Purpose**: Comprehensive documentation for Claude Code and future developers working on this project.
 
+## Delegating to opencode (subagents)
+
+This repo has a second AI coding agent available as a CLI: **`opencode`**. Use it for
+self-contained subtasks — heavy codebase exploration where you only need a report back,
+independent well-specified implementation chunks, or a second-opinion review of a diff.
+
+Full protocol (when to delegate, the statelessness contract, advisory vs. autonomous-edit
+modes, verification rules): **[.claude/skills/opencode-delegation/SKILL.md](.claude/skills/opencode-delegation/SKILL.md)**.
+
+```bash
+opencode run "<fully self-contained task>"
+opencode run --model <provider/model> "<task>"   # pin a specific model
+```
+
+Treat delegated output as a **proposal**: re-read changed files, run the typecheck, and
+never commit it unreviewed.
+
 ---
 
 ## Project Overview
@@ -13,7 +30,7 @@
 2. Summarize using Google Gemini (free tier) — or local Ollama/Mistral — at 5 AM Berlin time
 3. Send curated email digest (6 AM Berlin time)
 
-**Status**: Email delivery working (Resend) — choosing summarization LLM for cloud, then Phase 5 deploy
+**Status**: Live in production — deployed on GitHub Actions + Neon, sending daily at ~04:00 Berlin
 
 ---
 
@@ -676,13 +693,14 @@ pkill -f "npm run dev"       # Kill backend process
 
 ## Getting Help
 
-1. Check `CURRENT_STATE.md` for project status
+1. Check `DEPLOYMENT.md` for the cloud runbook and scheduling
 2. Check `EMAIL_SETUP_GUIDE.md` for email configuration
-3. Check `HANDOFF.md` for the Phase 5+ roadmap
+3. Inspect a failed run: `gh run view <run-id> --log` (and check the run's
+   **annotations** — a billing/quota block stops the job before it ever starts)
 4. Review backend logs: `npm run dev` output
 5. Check database: `psql -d jojos_news -c "SELECT ..."`
 
 ---
 
-**Last Updated**: 2026-07-10  
-**Status**: Email delivery working (Resend) — choosing summarization LLM for cloud, then Phase 5 deploy
+**Last Updated**: 2026-08-26  
+**Status**: Live in production — deployed on GitHub Actions + Neon, sending daily at ~04:00 Berlin
