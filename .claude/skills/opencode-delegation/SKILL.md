@@ -46,6 +46,37 @@ the better hosted models will not appear in the list.
   then exits. Exit code is non-zero on failure.
 - Optionally pin a model: `opencode run --model <provider/model> "<task>"`.
 
+## Choosing a model
+
+`opencode models` lists what you can use; `opencode auth list` shows whether you are
+logged in (without credentials only the anonymous free models are offered — better hosted
+models such as `ox-alpha` require `opencode auth login`).
+
+Measured on a real repo task (list files in a directory + explain one file's purpose,
+requiring tool use), free tier:
+
+| Model | Time | Verdict |
+|-------|------|---------|
+| `opencode/big-pickle` (default) | 19s | Fastest, correct — good default |
+| `opencode/muse-spark-1.2-contributor-free` | 24s | Correct |
+| `opencode/hy3-free` | 26s | Correct, most thorough tool use (Glob + Grep + Read) |
+| `opencode/mimo-v2.5-free` | 32s | Correct |
+| `opencode/nemotron-3-ultra-free` | timeout | **Avoid** — produced nothing in 180s |
+| `opencode/nemotron-3.5-lightning-free` | timeout | **Avoid** — produced nothing in 180s |
+
+Practical guidance:
+
+- **Default / quick lookups** — leave it on `big-pickle`, or pin it explicitly.
+- **Deeper codebase exploration** — `hy3-free` searched most thoroughly.
+- **A second opinion** — deliberately pick a *different* model from the one that produced
+  the work, so you get genuinely independent judgement.
+- **Never the nemotron free tiers** for delegation; they stall and return empty.
+- **Don't delegate open-ended web research.** These models have no browsing; an
+  open-ended "research the current pricing of X" delegation returned an empty result
+  after ten minutes. Delegate work that is answerable *from the repo* or from the prompt.
+
+Re-measure occasionally — the free model roster changes.
+
 ## Statelessness contract (critical)
 
 The delegate has **no memory** of this conversation or previous calls. Every
