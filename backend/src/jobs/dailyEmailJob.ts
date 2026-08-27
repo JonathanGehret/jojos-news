@@ -32,13 +32,39 @@ export class DailyEmailJob {
     );
   }
 
+  /**
+   * Wurde heute schon erfolgreich eine Mail verschickt? GitHub laesst geplante
+   * Laeufe unter Last auch mal komplett ausfallen, deshalb darf der Workflow
+   * mehrmals taeglich starten - dieser Check verhindert doppelte Mails.
+   */
+  private async alreadySentToday(): Promise<boolean> {
+    try {
+      const row = await db.queryOne(
+        "SELECT 1 FROM email_logs WHERE date = CURRENT_DATE AND status = 'sent' LIMIT 1"
+      );
+      return Boolean(row);
+    } catch (error) {
+      // Im Zweifel senden: eine doppelte Mail ist besser als gar keine.
+      console.error('Could not check email_logs, sending anyway:', error);
+      return false;
+    }
+  }
+
   async execute(
-    options: { allowAdHocSummarization?: boolean } = {}
+    options: { allowAdHocSummarization?: boolean; force?: boolean } = {}
   ): Promise<void> {
-    const { allowAdHocSummarization = true } = options;
+    const { allowAdHocSummarization = true, force = false } = options;
 
     try {
       console.log('Starting daily email generation and sending...');
+
+      if (!force && (await this.alreadySentToday())) {
+        console.log(
+          '✓ Fuer heute wurde bereits eine Digest-Mail verschickt - nichts zu tun. ' +
+            '(Mit force=true laesst sich das ueberspringen.)'
+        );
+        return;
+      }
 
       const today = new Date();
       const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });

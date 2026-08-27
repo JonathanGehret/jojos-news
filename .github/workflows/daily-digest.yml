@@ -2,13 +2,24 @@ name: Daily Digest
 
 on:
   schedule:
-    # One fixed daily run. ~04:00 Berlin in summer (CEST), ~03:00 in winter (CET) —
-    # we accept the 1h DST drift rather than gate on an exact hour, because GitHub
-    # cron runs are often delayed and an exact-hour guard would skip them entirely.
-    # The :13 minute dodges the worst top-of-hour scheduling backlog.
-    - cron: '13 2 * * *' # 02:13 UTC
+    # Ziel: ~04:00 Berlin (Sommer) bzw. ~03:00 (Winter) — die 1h DST-Drift nehmen
+    # wir bewusst in Kauf, statt auf eine exakte Stunde zu pruefen: geplante Laeufe
+    # werden oft verspaetet gestartet, ein Stunden-Gate wuerde sie dann verwerfen.
+    # Die krummen Minuten meiden den Stau zur vollen Stunde.
+    # GitHub drops scheduled runs entirely when Actions is under load — no run,
+    # no queue entry, no trace. That is what silently skipped a morning digest.
+    # So we try three times; the job itself checks email_logs and exits early if
+    # today's digest already went out, which makes the extra attempts harmless.
+    - cron: '13 2 * * *' # 02:13 UTC — ~04:13 Berlin (summer)
+    - cron: '43 3 * * *' # 03:43 UTC — Auffangnetz, falls der erste Lauf ausfaellt
+    - cron: '27 5 * * *' # 05:27 UTC — letzter Versuch vor dem Aufstehen
   # Lets you trigger a run manually from the Actions tab to test.
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Auch senden, wenn heute schon eine Mail rausging'
+        type: boolean
+        default: false
 
 # Avoid overlapping runs if a previous one is still going.
 concurrency:
@@ -48,6 +59,8 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           EMAIL_TIMEZONE: Europe/Berlin
+          # Nur beim manuellen Lauf relevant: erzwingt den Versand trotz Guard.
+          FORCE_EMAIL: ${{ github.event.inputs.force }}
           # Reddit (optional): the client self-skips if these are unset, so the
           # workflow is safe before the secrets exist. Add them to turn Reddit on.
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
