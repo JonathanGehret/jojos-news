@@ -37,7 +37,7 @@ export class DailyEmailJob {
    * Laeufe unter Last auch mal komplett ausfallen, deshalb darf der Workflow
    * mehrmals taeglich starten - dieser Check verhindert doppelte Mails.
    */
-  private async alreadySentToday(): Promise<boolean> {
+  async alreadySentToday(): Promise<boolean> {
     try {
       const row = await db.queryOne(
         "SELECT 1 FROM email_logs WHERE date = CURRENT_DATE AND status = 'sent' LIMIT 1"

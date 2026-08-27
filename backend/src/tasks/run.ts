@@ -24,17 +24,28 @@ async function run(task: string): Promise<void> {
     case 'email':
       await new DailyEmailJob().execute({ force: process.env.FORCE_EMAIL === 'true' });
       break;
-    case 'digest':
+    case 'digest': {
+      const force = process.env.FORCE_EMAIL === 'true';
+      const emailJob = new DailyEmailJob();
+
+      // Frueh pruefen: die Zusatz-Crons sind nur ein Auffangnetz. Ohne diesen
+      // Check wuerden sie jedes Mal komplett aggregieren und summarisieren
+      // (inkl. LLM-Aufrufe), obwohl die Mail am Ende ohnehin entfaellt.
+      if (!force && (await emailJob.alreadySentToday())) {
+        console.log(
+          '✓ Digest fuer heute wurde bereits verschickt - Lauf wird uebersprungen.'
+        );
+        break;
+      }
+
       await new AggregationScheduler().execute();
       await new SummarizationScheduler().execute();
       // Summarization already ran above, so disable the email job's ad-hoc retry —
       // otherwise a bad summarization run is repeated in full, doubling the API
       // calls and making rate-limit failures considerably worse.
-      await new DailyEmailJob().execute({
-        allowAdHocSummarization: false,
-        force: process.env.FORCE_EMAIL === 'true',
-      });
+      await emailJob.execute({ allowAdHocSummarization: false, force });
       break;
+    }
     default:
       throw new Error(
         `Unknown task "${task}". Use one of: aggregate | summarize | email | digest`
