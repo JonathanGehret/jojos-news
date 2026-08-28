@@ -2,17 +2,18 @@ name: Daily Digest
 
 on:
   schedule:
-    # Ziel: ~04:00 Berlin (Sommer) bzw. ~03:00 (Winter) — die 1h DST-Drift nehmen
-    # wir bewusst in Kauf, statt auf eine exakte Stunde zu pruefen: geplante Laeufe
-    # werden oft verspaetet gestartet, ein Stunden-Gate wuerde sie dann verwerfen.
-    # Die krummen Minuten meiden den Stau zur vollen Stunde.
-    # GitHub drops scheduled runs entirely when Actions is under load — no run,
-    # no queue entry, no trace. That is what silently skipped a morning digest.
-    # So we try three times; the job itself checks email_logs and exits early if
-    # today's digest already went out, which makes the extra attempts harmless.
-    - cron: '13 2 * * *' # 02:13 UTC — ~04:13 Berlin (summer)
-    - cron: '43 3 * * *' # 03:43 UTC — Auffangnetz, falls der erste Lauf ausfaellt
-    - cron: '27 5 * * *' # 05:27 UTC — letzter Versuch vor dem Aufstehen
+    # GENAU EIN Eintrag - bitte keine weiteren hinzufuegen.
+    #
+    # Belegte Historie: mit diesem einen Cron lief der Digest von Mitte Juli bis
+    # zum 26.08. jeden einzelnen Tag (tatsaechlicher Start jeweils 03:06-03:16 UTC,
+    # also rund eine Stunde nach der Cron-Zeit - diese Verzoegerung ist normal).
+    # Am 27.08. wurde daraus ein "Sicherheitsnetz" aus drei Eintraegen; ab da kam
+    # nur noch ein einziger, voellig verschobener Lauf und danach gar keiner mehr.
+    # Dasselbe Muster im Repo wohnungssuche, das mit drei Eintraegen angelegt war.
+    #
+    # Bleibt ein Lauf mal aus: den Workflow von Hand starten (Actions-Tab). Der
+    # Job prueft vorher email_logs und verschickt nichts doppelt.
+    - cron: '13 2 * * *' # 02:13 UTC -> Start ~03:1x UTC, ~05:1x Berlin (Sommer)
   # Lets you trigger a run manually from the Actions tab to test.
   workflow_dispatch:
     inputs:
