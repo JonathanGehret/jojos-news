@@ -47,10 +47,12 @@ export class EmailSender {
         html: html,
       });
 
-      // Handle Resend response (v3+ returns data directly, older versions nested)
-      const emailId = (response as any).id || (response as any).data?.id;
+      // Resend v3+ returns { data, error } and does not throw on API errors.
+      const emailId = response.data?.id;
       if (!emailId) {
-        throw new Error('Failed to send email: No message ID returned');
+        throw new Error(
+          `Failed to send email: ${response.error?.message ?? 'no message ID returned'}`
+        );
       }
 
       // Log successful send
