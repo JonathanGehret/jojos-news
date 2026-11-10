@@ -9,7 +9,8 @@ self-contained subtasks — heavy codebase exploration where you only need a rep
 independent well-specified implementation chunks, or a second-opinion review of a diff.
 
 Full protocol (when to delegate, the statelessness contract, advisory vs. autonomous-edit
-modes, verification rules): **[.claude/skills/opencode-delegation/SKILL.md](.claude/skills/opencode-delegation/SKILL.md)**.
+modes, verification rules, measured model choice): the **`opencode-delegation`** skill
+(plugin `opencode-delegation@gehret-plugins`, installed for every session).
 
 ```bash
 opencode run "<fully self-contained task>"
